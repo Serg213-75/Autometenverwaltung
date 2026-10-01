@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b6bcb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Automaten">
+<link rel="manifest" href="manifest.json">
+<title>Automatenverwaltung</title>
+<style>
+:root{--blue:#0b6bcb;--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#66717d;--line:#e2e7ec;--danger:#c62828;--green:#178a4b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{border:0;cursor:pointer}.app{max-width:700px;margin:auto;min-height:100vh;padding-bottom:88px}
+header{padding:calc(env(safe-area-inset-top) + 18px) 18px 14px;background:#fff;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+h1{font-size:24px;margin:0 0 4px}.sub{color:var(--muted);font-size:14px}
+main{padding:16px}.view{display:none}.view.active{display:block}
+.hero{background:linear-gradient(135deg,#0b6bcb,#1686e8);color:#fff;border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 8px 24px #0b6bcb22}
+.hero h2{margin:0 0 5px;font-size:24px}.hero p{margin:0;opacity:.9}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.action{background:var(--card);padding:18px 14px;border-radius:18px;text-align:left;box-shadow:0 2px 8px #00000008;border:1px solid var(--line);min-height:92px}
+.action strong{display:block;margin-top:8px;font-size:16px}.icon{font-size:25px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px}.stat b{font-size:22px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}.section-title{font-size:18px;font-weight:700;margin:4px 0 14px}
+label{font-size:13px;color:var(--muted);display:block;margin:13px 0 6px}input,select,textarea{width:100%;padding:13px;border:1px solid #d5dce3;border-radius:12px;background:#fff;color:var(--text);outline:none}input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0b6bcb18}textarea{min-height:100px;resize:vertical}
+.btn{width:100%;padding:14px;border-radius:13px;font-weight:700}.primary{background:var(--blue);color:#fff}.secondary{background:#eef3f8;color:var(--text)}.danger{background:#fff0f0;color:var(--danger)}.green{background:#eaf8f0;color:var(--green)}
+.row{display:flex;gap:10px}.row>*{flex:1}.toolbar{display:flex;gap:8px;overflow:auto;margin:10px 0 14px}.chip{white-space:nowrap;background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:20px}.chip.active{background:#e8f2fd;color:var(--blue);border-color:#a9cdf2}
+.machine{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px}.machine-top{display:flex;justify-content:space-between;gap:10px}.machine h3{margin:0 0 5px;font-size:17px}.machine p{margin:3px 0;color:var(--muted);font-size:13px}.badge{font-size:11px;background:#eef3f8;padding:6px 8px;border-radius:10px;white-space:nowrap;height:max-content}.empty{text-align:center;color:var(--muted);padding:40px 15px}.back{background:none;padding:0;color:var(--blue);font-weight:600;margin-bottom:12px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail{background:#f7f9fb;border-radius:12px;padding:11px}.detail small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.detail b{font-size:14px;word-break:break-word}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
+.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
+.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}
+@media(min-width:650px){.stats{grid-template-columns:repeat(5,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>Automatenverwaltung</h1><div class="sub" id="headerSub">Ihre Automaten auf einen Blick</div></header>
+<main>
+<section id="home" class="view active">
+  <div class="hero"><h2>Automaten</h2><p id="heroText">Noch keine Automaten erfasst.</p></div>
+  <div class="actions">
+    <button class="action" onclick="showView('form')"><span class="icon">➕</span><strong>Automat einfügen</strong><span class="sub">Neuen Automaten erfassen</span></button>
+    <button class="action" onclick="showView('search')"><span class="icon">🔍</span><strong>Automat suchen</strong><span class="sub">Nummer, Firma oder Standort</span></button>
+    <button class="action" onclick="showView('list')"><span class="icon">📋</span><strong>Alle Automaten</strong><span class="sub">Übersicht und Filter</span></button>
+  </div>
+  <div class="stats" id="stats"></div>
+</section>
+
+<section id="search" class="view">
+  <button class="back" onclick="showView('home')">‹ Startseite</button>
+  <div class="card"><div class="section-title">Automat suchen</div>
+    <input id="searchInput" placeholder="Nummer, Firma oder Standort…" oninput="renderResults()">
+  </div>
+  <div id="searchResults"></div>
+</section>
+
+<section id="list" class="view">
+  <button class="back" onclick="showView('home')">‹ Startseite</button>
+  <div class="card"><div class="section-title">Alle Automaten</div>
+    <input id="listSearch" placeholder="Liste durchsuchen…" oninput="renderList()">
+    <div class="toolbar" id="filterBar"></div>
+  </div>
+  <div id="machineList"></div>
+</section>
+
+<section id="form" class="view">
+  <button class="back" onclick="showView('home')">‹ Startseite</button>
+  <div class="card">
+    <div class="section-title" id="formTitle">Neuen Automaten einfügen</div>
+    <form id="machineForm" onsubmit="saveMachine(event)">
+      <input type="hidden" id="editId">
+      <label>Automatennummer *</label><input id="number" required placeholder="z. B. A-102">
+      <label>Automatentyp *</label>
+      <select id="type" required>
+        <option value="">Bitte auswählen</option><option>Kaffeeautomat</option><option>Snackautomat</option><option>Wasserspender</option><option>KG Automat</option><option>Foodautomat</option>
+      </select>
+      <label>Automatenname</label><input id="name" placeholder="z. B. Kaffeeautomat EG">
+      <label>Firma</label><input id="company" placeholder="Firma / Kunde">
+      <label>Standort</label><input id="location" placeholder="Werk, Gebäude, Adresse …">
+      <div class="row"><div><label>Station</label><input id="station" placeholder="z. B. Station 3"></div><div><label>Stock</label><input id="floor" placeholder="EG / 1. OG"></div></div>
+      <label>Seriennummer</label><input id="serial" placeholder="Seriennummer">
+      <label>Bemerkung</label><textarea id="notes" placeholder="Zusätzliche Informationen …"></textarea>
+      <button class="btn primary" style="margin-top:14px">💾 Speichern</button>
+      <button type="button" class="btn secondary" style="margin-top:9px" onclick="resetForm();showView('home')">Abbrechen</button>
+    </form>
+  </div>
+</section>
+
+<section id="detail" class="view">
+  <button class="back" onclick="showView('list')">‹ Zurück</button>
+  <div id="detailContent"></div>
+</section>
+
+<section id="data" class="view">
+  <button class="back" onclick="showView('home')">‹ Startseite</button>
+  <div class="card">
+    <div class="section-title">Daten sichern</div>
+    <p class="sub">Exportiere deine Automaten als JSON-Datei oder importiere eine zuvor gesicherte Datei.</p>
+    <button class="btn green" onclick="exportData()">⬇️ Daten exportieren</button>
+    <label class="file-label" style="margin-top:9px">⬆️ Daten importieren<input type="file" accept=".json,application/json" hidden onchange="importData(event)"></label>
+  </div>
+  <div class="card">
+    <div class="section-title">Datenbestand</div>
+    <p id="dataInfo" class="sub"></p>
+    <button class="btn danger" onclick="clearAll()">Alle Automaten löschen</button>
+  </div>
+</section>
+</main>
+<nav><div class="nav-inner">
+<button class="nav-btn active" data-view="home" onclick="showView('home')"><span>🏠</span>Start</button>
+<button class="nav-btn" data-view="search" onclick="showView('search')"><span>🔍</span>Suchen</button>
+<button class="nav-btn" data-view="form" onclick="newMachine()"><span>➕</span>Neu</button>
+<button class="nav-btn" data-view="list" onclick="showView('list')"><span>📋</span>Automaten</button>
+</div></nav>
+</div>
+<script>
+const KEY='automatenverwaltung_v1';
+let machines=JSON.parse(localStorage.getItem(KEY)||'[]');
+let currentFilter='Alle';
+
+const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat'];
+const icons={'Kaffeeautomat':'☕','Snackautomat':'🍫','Wasserspender':'💧','KG Automat':'🥤','Foodautomat':'🍽️'};
+
+function persist(){localStorage.setItem(KEY,JSON.stringify(machines));updateHome();}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  if(id==='home') updateHome();
+  if(id==='search'){document.getElementById('searchInput').focus();renderResults();}
+  if(id==='list') renderList();
+  if(id==='data') updateDataInfo();
+  window.scrollTo(0,0);
+}
+function updateHome(){
+  document.getElementById('heroText').textContent=machines.length?`${machines.length} Automaten erfasst.`:'Noch keine Automaten erfasst.';
+  const counts=types.slice(1).map(t=>`<div class="stat"><b>${machines.filter(m=>m.type===t).length}</b><span>${t}</span></div>`).join('');
+  document.getElementById('stats').innerHTML=counts+`<div class="stat"><b>${machines.length}</b><span>Alle Automaten</span></div>`;
+}
+function newMachine(){resetForm();showView('form');}
+function resetForm(){
+  document.getElementById('machineForm').reset();document.getElementById('editId').value='';
+  document.getElementById('formTitle').textContent='Neuen Automaten einfügen';
+}
+function val(id){return document.getElementById(id).value.trim()}
+function saveMachine(e){
+  e.preventDefault();
+  const number=val('number');
+  const editId=val('editId');
+  const duplicate=machines.find(m=>m.number.toLowerCase()===number.toLowerCase() && m.id!==editId);
+  if(duplicate){alert('Diese Automatennummer ist bereits vorhanden.');return;}
+  const now=new Date().toISOString();
+  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),updatedAt:now};
+  if(editId){const i=machines.findIndex(m=>m.id===editId);machines[i]=obj}else machines.unshift(obj);
+  persist();showDetail(obj.id);
+}
+function machineCard(m){
+ return `<button class="machine" style="width:100%;text-align:left" onclick="showDetail('${m.id}')">
+ <div class="machine-top"><div><h3>${icons[m.type]||'⚙️'} ${esc(m.number)}${m.name?' · '+esc(m.name):''}</h3><p>${esc(m.company||'Keine Firma')} · ${esc(m.location||'Kein Standort')}</p><p>${esc(m.station||'')}${m.floor?' · '+esc(m.floor):''}</p></div><span class="badge">${esc(m.type)}</span></div></button>`;
+}
+function renderResults(){
+ const q=val('searchInput').toLowerCase();
+ const arr=machines.filter(m=>!q||[m.number,m.company,m.location,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
+ document.getElementById('searchResults').innerHTML=arr.length?arr.map(machineCard).join(''):`<div class="empty">${q?'Keine passenden Automaten gefunden.':'Suchbegriff eingeben.'}</div>`;
+}
+function renderList(){
+ const q=(document.getElementById('listSearch').value||'').toLowerCase();
+ document.getElementById('filterBar').innerHTML=types.map(t=>`<button class="chip ${currentFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('');
+ let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter));
+ if(q)arr=arr.filter(m=>[m.number,m.company,m.location,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
+ document.getElementById('machineList').innerHTML=arr.length?arr.map(machineCard).join(''):`<div class="empty">Keine Automaten gefunden.</div>`;
+}
+function setFilter(f){currentFilter=f;renderList()}
+function showDetail(id){
+ const m=machines.find(x=>x.id===id);if(!m)return;
+ document.getElementById('detailContent').innerHTML=`<div class="card">
+ <div style="font-size:36px">${icons[m.type]||'⚙️'}</div><h2 style="margin:6px 0">${esc(m.number)}</h2><p class="sub">${esc(m.type)}${m.name?' · '+esc(m.name):''}</p>
+ <div class="section-title" style="margin-top:20px">Standort</div>
+ <div class="detail-grid">
+ ${detail('Firma',m.company)}${detail('Standort',m.location)}${detail('Station',m.station)}${detail('Stock',m.floor)}
+ </div>
+ <div class="section-title" style="margin-top:20px">Technische Daten</div>
+ <div class="detail-grid">${detail('Seriennummer',m.serial)}${detail('Automatentyp',m.type)}</div>
+ <div class="section-title" style="margin-top:20px">Bemerkung</div><div class="detail">${esc(m.notes||'Keine Bemerkung')}</div>
+ <div class="row" style="margin-top:16px"><button class="btn primary" onclick="editMachine('${m.id}')">✏️ Bearbeiten</button><button class="btn danger" onclick="deleteMachine('${m.id}')">🗑️ Löschen</button></div>
+ </div>`;
+ showView('detail');
+}
+function detail(k,v){return `<div class="detail"><small>${k}</small><b>${esc(v||'—')}</b></div>`}
+function editMachine(id){
+ const m=machines.find(x=>x.id===id);if(!m)return;
+ ['number','type','name','company','location','station','floor','serial','notes'].forEach(k=>document.getElementById(k).value=m[k]||'');
+ document.getElementById('editId').value=id;document.getElementById('formTitle').textContent='Automat bearbeiten';showView('form');
+}
+function deleteMachine(id){
+ if(!confirm('Diesen Automaten wirklich löschen?'))return;
+ machines=machines.filter(m=>m.id!==id);persist();showView('list');
+}
+function exportData(){
+ const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),machines},null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='automaten-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importData(e){
+ const file=e.target.files[0];if(!file)return;const r=new FileReader();
+ r.onload=()=>{try{const d=JSON.parse(r.result);const incoming=Array.isArray(d)?d:d.machines;if(!Array.isArray(incoming))throw Error();
+ const map=new Map(machines.map(m=>[m.id,m]));incoming.forEach(m=>{if(m.id)map.set(m.id,m)});machines=[...map.values()];persist();alert(`${incoming.length} Datensätze importiert/aktualisiert.`);showView('home')}catch{alert('Die Datei konnte nicht gelesen werden.')}};r.readAsText(file);e.target.value='';
+}
+function clearAll(){if(confirm('Wirklich ALLE Automaten löschen? Diese Aktion kann nur mit einem Backup rückgängig gemacht werden.')){machines=[];persist();showView('home')}}
+function updateDataInfo(){document.getElementById('dataInfo').textContent=`${machines.length} Automaten lokal auf diesem Gerät gespeichert.`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+updateHome();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
