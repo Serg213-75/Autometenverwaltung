@@ -17,3 +17,5 @@ Diese Version speichert die Daten lokal auf dem jeweiligen Gerät. Für gemeinsa
 
 iPhone:
 Die App muss über HTTPS auf einer Website erreichbar sein. Dann in Safari öffnen -> Teilen -> Zum Home-Bildschirm.
+
+Änderung in Version 3: „Geldaufwerter“ ist jetzt als Automatentyp auswählbar.

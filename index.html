@@ -74,7 +74,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
       <label>Automatennummer *</label><input id="number" required placeholder="z. B. A-102">
       <label>Automatentyp *</label>
       <select id="type" required>
-        <option value="">Bitte auswählen</option><option>Kaffeeautomat</option><option>Snackautomat</option><option>Wasserspender</option><option>KG Automat</option><option>Foodautomat</option>
+        <option value="">Bitte auswählen</option><option>Kaffeeautomat</option><option>Snackautomat</option><option>Wasserspender</option><option>KG Automat</option><option>Foodautomat</option><option>Geldaufwerter</option>
       </select>
       <label>Automatenname</label><input id="name" placeholder="z. B. ES9100, SXE8, FK230">
       <label>Firma</label><input id="company" placeholder="Firma / Kunde">
@@ -124,8 +124,8 @@ const KEY='automatenverwaltung_v1';
 let machines=JSON.parse(localStorage.getItem(KEY)||'[]');
 let currentFilter='Alle';
 
-const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat'];
-const icons={'Kaffeeautomat':'☕','Snackautomat':'🍫','Wasserspender':'💧','KG Automat':'🥤','Foodautomat':'🍽️'};
+const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat','Geldaufwerter'];
+const icons={'Kaffeeautomat':'☕','Snackautomat':'🍫','Wasserspender':'💧','KG Automat':'🥤','Foodautomat':'🍽️','Geldaufwerter':'💶'};
 
 function persist(){localStorage.setItem(KEY,JSON.stringify(machines));updateHome();}
 function showView(id){
@@ -152,7 +152,10 @@ function resetForm(){
 function addServiceRow(data={}){
   const wrap=document.getElementById('serviceRows');
   const row=document.createElement('div'); row.className='service-row';
-  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
+  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div style="margin-top:8px"><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
+  const from=row.querySelector('.service-from'), to=row.querySelector('.service-to'), duration=row.querySelector('.service-duration');
+  function calcDuration(){ if(!from.value||!to.value){duration.value='';return;} let [fh,fm]=from.value.split(':').map(Number),[th,tm]=to.value.split(':').map(Number); let mins=(th*60+tm)-(fh*60+fm); if(mins<0) mins+=24*60; duration.value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.'; }
+  from.addEventListener('input',calcDuration); to.addEventListener('input',calcDuration); calcDuration();
   wrap.appendChild(row);
 }
 function renderServiceRows(services){
@@ -161,12 +164,12 @@ function renderServiceRows(services){
   if(!services || !services.length) addServiceRow();
 }
 function readServices(){
-  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,performance:r.querySelector('.service-performance').value.trim()})).filter(x=>x.date||x.performance);
+  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,performance:r.querySelector('.service-performance').value.trim()})).filter(x=>x.date||x.from||x.to||x.performance);
 }
 function serviceDetails(services){
   const arr=services||[];
   if(!arr.length) return '<div class="detail">Keine Serviceeinsätze eingetragen.</div>';
-  return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${esc(x.performance||'—')}</div></div>`).join('')}</div>`;
+  return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div><div class="sub" style="margin-top:4px">${esc(x.performance||'—')}</div></div>`).join('')}</div>`;
 }
 function val(id){return document.getElementById(id).value.trim()}
 function saveMachine(e){
