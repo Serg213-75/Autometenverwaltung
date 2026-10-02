@@ -304,10 +304,17 @@ function pdfFields(m){
 }
 function addPdfWrapped(doc,label,value,x,y,w){
   const text=String(value||'').trim(); if(!text)return y;
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(label,x,y);
-  const lines=doc.splitTextToSize(text,w-80);
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(lines,x+78,y);
-  return y+Math.max(15,lines.length*12);
+  // Zweispaltiges Layout mit ausreichend Platz für lange Bezeichnungen,
+  // damit sich Label und Wert nicht mehr überlagern.
+  const labelW=150, gap=10, valueX=x+labelW+gap, valueW=w-labelW-gap;
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  const labelLines=doc.splitTextToSize(String(label),labelW);
+  doc.text(labelLines,x,y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  const valueLines=doc.splitTextToSize(text,valueW);
+  doc.text(valueLines,valueX,y);
+  const lineCount=Math.max(labelLines.length,valueLines.length);
+  return y+Math.max(15,lineCount*12);
 }
 function buildServicePdf(m,s){
   if(!window.jspdf || !window.jspdf.jsPDF){throw new Error('PDF-Bibliothek konnte nicht geladen werden.');}
@@ -317,7 +324,10 @@ function buildServicePdf(m,s){
   let y=48;
   const ensure=(need=40)=>{if(y+need>800){doc.addPage();y=48;}};
   doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('Lieferschein – Serviceeinsatz',margin,y);y+=24;
-  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90);doc.text(serviceFileName(m,s),margin,y);doc.setTextColor(0);y+=25;
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(90);
+  const fileLines=doc.splitTextToSize(serviceFileName(m,s),contentW);
+  doc.text(fileLines,margin,y);
+  doc.setTextColor(0);y+=Math.max(25,fileLines.length*10+10);
 
   doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Automat',margin,y);y+=16;
   const fields=pdfFields(m);
