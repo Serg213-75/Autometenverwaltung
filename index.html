@@ -130,9 +130,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <div class="row" style="margin-top:7px"><button type="button" class="btn secondary" onclick="clearSignature()">Unterschrift löschen</button></div>
     <label>3 – Name mit Druckbuchstaben</label><input id="modalPrintedName" placeholder="Vorname Nachname">
     <div class="row" style="margin-top:14px"><button class="btn secondary" onclick="closeServiceModal()">Abbrechen</button><button class="btn primary" onclick="confirmServiceDocument()">Weiter</button></div>
-    <div class="small-note" style="margin-top:10px">Beim PDF wird anschließend der iPhone-Druckdialog geöffnet. Dort kannst du „Teilen“ → „In Dateien sichern“ wählen.</div>
+    <div class="small-note" style="margin-top:10px">Beim PDF öffnet sich direkt die iPhone-Teilen-Funktion. Dort kannst du „In Dateien sichern“, Mail, WhatsApp usw. auswählen.</div>
   </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const KEY='automatenverwaltung_v1';
 let machines=JSON.parse(localStorage.getItem(KEY)||'[]');
@@ -293,20 +294,99 @@ function confirmServiceDocument(){
 }
 function safeFilePart(v){return String(v||'').trim().replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,'_').replace(/_+/g,'_')||'ohne_Angabe';}
 function serviceFileName(m,s){return `${safeFilePart(m.company)}_${safeFilePart(m.location)}_${safeFilePart(m.station)}_${safeFilePart(m.number)}_${safeFilePart(m.name)}_${safeFilePart(s.date)}.pdf`;}
-function servicePrintHtml(m,s){
- const signature=s.signature?`<img src="${s.signature}" style="max-width:260px;max-height:100px;display:block;margin:4px 0">`:'';
- return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(serviceFileName(m,s))}</title><style>body{font-family:Arial,sans-serif;color:#111;padding:32px;max-width:850px;margin:auto}h1{font-size:25px;margin:0 0 4px}h2{font-size:17px;margin:22px 0 8px;border-bottom:1px solid #bbb;padding-bottom:5px}.meta{color:#555;margin-bottom:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.box{border:1px solid #ccc;border-radius:5px;padding:8px}.box b{display:block;font-size:11px;color:#666;margin-bottom:3px}.service{border:1px solid #999;padding:12px;border-radius:6px}.sig{margin-top:25px;display:grid;grid-template-columns:1fr 1fr;gap:40px}.line{border-top:1px solid #222;margin-top:35px;padding-top:5px;font-size:12px}@media print{body{padding:0}.noprint{display:none}}</style></head><body><h1>Lieferschein – Serviceeinsatz</h1><div class="meta">${esc(m.company||'')} · ${esc(m.location||'')} · ${esc(s.date||'')}</div><h2>Automat</h2><div class="grid"><div class="box"><b>Automatennummer</b>${esc(m.number)}</div><div class="box"><b>Automatentyp</b>${esc(m.type)}</div><div class="box"><b>Automatenname</b>${esc(m.name)}</div><div class="box"><b>Firma</b>${esc(m.company)}</div><div class="box"><b>Standort</b>${esc(m.location)}</div><div class="box"><b>Adresse</b>${esc(m.address)}</div><div class="box"><b>Station</b>${esc(m.station)}</div><div class="box"><b>Stock</b>${esc(m.floor)}</div><div class="box"><b>Seriennummer</b>${esc(m.serial)}</div></div><h2>Serviceeinsatz</h2><div class="service"><p><b>Datum:</b> ${esc(s.date||'—')}</p><p><b>Arbeitszeit:</b> ${esc(s.from||'—')} bis ${esc(s.to||'—')} · <b>Dauer:</b> ${esc(s.duration||'—')}</p><p><b>Fehlerbeschreibung:</b><br>${esc(s.errorDescription||'—').replace(/\n/g,'<br>')}</p><p><b>Leistung:</b><br>${esc(s.performance||'—').replace(/\n/g,'<br>')}</p></div><h2>Techniker / Bestätigung</h2><div class="grid"><div class="box"><b>Techniker</b>${esc(s.technician||'—')}</div><div class="box"><b>Name in Druckbuchstaben</b>${esc(s.printedName||'—')}</div></div><div class="sig"><div><b>Unterschrift</b>${signature}</div><div><div class="line">Unterschrift / Bestätigung</div></div></div><h2>Bemerkung</h2><div class="box">${esc(m.notes||'Keine Bemerkung').replace(/\n/g,'<br>')}</div></body></html>`;
+function pdfFields(m){
+  const fields=[
+    ['Automatennummer',m.number],['Automatentyp',m.type],['Automatenname',m.name],['Firma',m.company],
+    ['Standort',m.location],['Adresse',m.address],['Station',m.station],['Stock',m.floor],['Seriennummer',m.serial]
+  ];
+  if(m.notes) fields.push(['Bemerkung',m.notes]);
+  return fields.filter(x=>String(x[1]||'').trim());
 }
-function printServiceSlip(m,s){
- const w=window.open('','_blank'); if(!w){alert('Bitte Pop-ups für die Automatenverwaltung erlauben.');return;}
- w.document.open();w.document.write(servicePrintHtml(m,s));w.document.close();
- setTimeout(()=>{w.focus();w.print();},400);
+function addPdfWrapped(doc,label,value,x,y,w){
+  const text=String(value||'').trim(); if(!text)return y;
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(label,x,y);
+  const lines=doc.splitTextToSize(text,w-80);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(lines,x+78,y);
+  return y+Math.max(15,lines.length*12);
 }
-function prepareEmail(m,s){
- const subject=`Lieferschein Serviceeinsatz ${m.number} ${s.date||''}`.trim();
- const body=`Guten Tag,\n\nanbei der Lieferschein zum Serviceeinsatz.\n\nFirma: ${m.company||''}\nStandort: ${m.location||''}\nAdresse: ${m.address||''}\nStation: ${m.station||''}\nAutomat: ${m.number}${m.name?' / '+m.name:''}\nDatum: ${s.date||''}\nArbeitszeit: ${s.from||''} bis ${s.to||''}\nDauer: ${s.duration||''}\nFehlerbeschreibung: ${s.errorDescription||''}\nLeistung: ${s.performance||''}\nTechniker: ${s.technician||''}\n\nViele Grüße`;
- const mail='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body); window.location.href=mail;
- alert('Die E-Mail-App wurde mit den Serviceangaben vorbereitet. Wenn du den PDF-Lieferschein mitsenden möchtest, speichere ihn zuerst und füge ihn anschließend als Anhang hinzu.');
+function buildServicePdf(m,s){
+  if(!window.jspdf || !window.jspdf.jsPDF){throw new Error('PDF-Bibliothek konnte nicht geladen werden.');}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'a4'});
+  const margin=40, pageW=595, contentW=pageW-margin*2;
+  let y=48;
+  const ensure=(need=40)=>{if(y+need>800){doc.addPage();y=48;}};
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('Lieferschein – Serviceeinsatz',margin,y);y+=24;
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90);doc.text(serviceFileName(m,s),margin,y);doc.setTextColor(0);y+=25;
+
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Automat',margin,y);y+=16;
+  const fields=pdfFields(m);
+  for(const [label,value] of fields){
+    ensure(30); y=addPdfWrapped(doc,label,value,margin,y,contentW); y+=3;
+  }
+  y+=8; ensure(40); doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Serviceeinsatz',margin,y);y+=18;
+  const serviceFields=[['Datum',s.date],['Arbeitszeit',s.from&&s.to?`${s.from} bis ${s.to}`:(s.from||s.to)],['Dauer',s.duration],['Fehlerbeschreibung',s.errorDescription],['Leistung',s.performance]];
+  for(const [label,value] of serviceFields){
+    if(!String(value||'').trim())continue;
+    ensure(35); y=addPdfWrapped(doc,label,value,margin,y,contentW); y+=3;
+  }
+  y+=8; ensure(70); doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Techniker / Bestätigung',margin,y);y+=18;
+  if(s.technician){y=addPdfWrapped(doc,'Techniker',s.technician,margin,y,contentW);y+=3;}
+  if(s.printedName){y=addPdfWrapped(doc,'Name in Druckbuchstaben',s.printedName,margin,y,contentW);y+=3;}
+  if(s.signature){
+    ensure(130);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('Unterschrift',margin,y);y+=8;
+    try{doc.addImage(s.signature,'PNG',margin,y,220,90);y+=102;}catch(e){y+=12;}
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(90);doc.text(`Erstellt am ${new Date().toLocaleString('de-DE')}`,margin,820);
+  doc.setTextColor(0);
+  return doc;
+}
+async function shareServicePdf(m,s,subjectText){
+  try{
+    const doc=buildServicePdf(m,s);
+    const filename=serviceFileName(m,s);
+    const blob=doc.output('blob');
+    const file=new File([blob],filename,{type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:subjectText||filename,text:'Lieferschein Serviceeinsatz'});
+      return;
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    alert('Die PDF wurde erstellt. Falls sie nicht automatisch gespeichert wird, öffne den Download bzw. teile die Datei über Safari.');
+  }catch(err){
+    if(err && err.name==='AbortError')return;
+    alert('PDF konnte nicht erstellt/geteilt werden: '+(err?.message||err));
+  }
+}
+function printServiceSlip(m,s){ shareServicePdf(m,s,`Lieferschein ${m.number||''}`); }
+async function prepareEmail(m,s){
+  try{
+    const doc=buildServicePdf(m,s);
+    const filename=serviceFileName(m,s);
+    const blob=doc.output('blob');
+    const file=new File([blob],filename,{type:'application/pdf'});
+    const subject=`Lieferschein Serviceeinsatz ${m.number||''} ${s.date||''}`.trim();
+    const text=[
+      'Guten Tag,','',
+      'anbei der Lieferschein zum Serviceeinsatz.', '',
+      m.company?`Firma: ${m.company}`:'',m.location?`Standort: ${m.location}`:'',m.address?`Adresse: ${m.address}`:'',
+      m.station?`Station: ${m.station}`:'',`Automat: ${m.number||''}${m.name?' / '+m.name:''}`,
+      s.date?`Datum: ${s.date}`:'',s.from||s.to?`Arbeitszeit: ${s.from||''} bis ${s.to||''}`:'',s.duration?`Dauer: ${s.duration}`:'',
+      s.errorDescription?`Fehlerbeschreibung: ${s.errorDescription}`:'',s.performance?`Leistung: ${s.performance}`:'',s.technician?`Techniker: ${s.technician}`:'',
+      '','Viele Grüße'
+    ].filter(Boolean).join('\n');
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:subject,text});
+      return;
+    }
+    const mail='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(text);
+    window.location.href=mail;
+  }catch(err){
+    if(err && err.name==='AbortError')return;
+    alert('E-Mail konnte nicht vorbereitet werden: '+(err?.message||err));
+  }
 }
 function exportData(){
  const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),machines},null,2)],{type:'application/json'});
