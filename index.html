@@ -29,7 +29,7 @@ label{font-size:13px;color:var(--muted);display:block;margin:13px 0 6px}input,se
 .machine{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px}.machine-top{display:flex;justify-content:space-between;gap:10px}.machine h3{margin:0 0 5px;font-size:17px}.machine p{margin:3px 0;color:var(--muted);font-size:13px}.badge{font-size:11px;background:#eef3f8;padding:6px 8px;border-radius:10px;white-space:nowrap;height:max-content}.empty{text-align:center;color:var(--muted);padding:40px 15px}.back{background:none;padding:0;color:var(--blue);font-weight:600;margin-bottom:12px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail{background:#f7f9fb;border-radius:12px;padding:11px}.detail small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.detail b{font-size:14px;word-break:break-word}
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}
 .nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
-.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
+.service-row{background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
 .file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}
 @media(min-width:650px){.stats{grid-template-columns:repeat(5,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
 </style>
@@ -76,12 +76,16 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
       <select id="type" required>
         <option value="">Bitte auswählen</option><option>Kaffeeautomat</option><option>Snackautomat</option><option>Wasserspender</option><option>KG Automat</option><option>Foodautomat</option>
       </select>
-      <label>Automatenname</label><input id="name" placeholder="z. B. Kaffeeautomat EG">
+      <label>Automatenname</label><input id="name" placeholder="z. B. ES9100, SXE8, FK230">
       <label>Firma</label><input id="company" placeholder="Firma / Kunde">
-      <label>Standort</label><input id="location" placeholder="Werk, Gebäude, Adresse …">
-      <div class="row"><div><label>Station</label><input id="station" placeholder="z. B. Station 3"></div><div><label>Stock</label><input id="floor" placeholder="EG / 1. OG"></div></div>
+      <label>Standort</label><input id="location" placeholder="z. B. Öhringen, Crailsheim">
+      <label>Adresse</label><input id="address" placeholder="z. B. Hauptstrasse 1">
+      <div class="row"><div><label>Station</label><input id="station" placeholder="z. B. Station 3"></div><div><label>Stock</label><select id="floor"><option value="">Bitte auswählen</option><option>UG</option><option>EG</option><option>1OG</option><option>2OG</option><option>3OG</option><option>4OG</option><option>5OG</option></select></div></div>
       <label>Seriennummer</label><input id="serial" placeholder="Seriennummer">
       <label>Bemerkung</label><textarea id="notes" placeholder="Zusätzliche Informationen …"></textarea>
+      <div class="section-title" style="margin-top:20px">Serviceeinsätze</div>
+      <div id="serviceRows"></div>
+      <button type="button" class="btn secondary" style="margin-top:9px" onclick="addServiceRow()">➕ Serviceeinsatz hinzufügen</button>
       <button class="btn primary" style="margin-top:14px">💾 Speichern</button>
       <button type="button" class="btn secondary" style="margin-top:9px" onclick="resetForm();showView('home')">Abbrechen</button>
     </form>
@@ -143,6 +147,26 @@ function newMachine(){resetForm();showView('form');}
 function resetForm(){
   document.getElementById('machineForm').reset();document.getElementById('editId').value='';
   document.getElementById('formTitle').textContent='Neuen Automaten einfügen';
+  renderServiceRows([]);
+}
+function addServiceRow(data={}){
+  const wrap=document.getElementById('serviceRows');
+  const row=document.createElement('div'); row.className='service-row';
+  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
+  wrap.appendChild(row);
+}
+function renderServiceRows(services){
+  const wrap=document.getElementById('serviceRows'); wrap.innerHTML='';
+  (services||[]).forEach(addServiceRow);
+  if(!services || !services.length) addServiceRow();
+}
+function readServices(){
+  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,performance:r.querySelector('.service-performance').value.trim()})).filter(x=>x.date||x.performance);
+}
+function serviceDetails(services){
+  const arr=services||[];
+  if(!arr.length) return '<div class="detail">Keine Serviceeinsätze eingetragen.</div>';
+  return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${esc(x.performance||'—')}</div></div>`).join('')}</div>`;
 }
 function val(id){return document.getElementById(id).value.trim()}
 function saveMachine(e){
@@ -152,7 +176,7 @@ function saveMachine(e){
   const duplicate=machines.find(m=>m.number.toLowerCase()===number.toLowerCase() && m.id!==editId);
   if(duplicate){alert('Diese Automatennummer ist bereits vorhanden.');return;}
   const now=new Date().toISOString();
-  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),updatedAt:now};
+  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),address:val('address'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),services:readServices(),updatedAt:now};
   if(editId){const i=machines.findIndex(m=>m.id===editId);machines[i]=obj}else machines.unshift(obj);
   persist();showDetail(obj.id);
 }
@@ -162,14 +186,14 @@ function machineCard(m){
 }
 function renderResults(){
  const q=val('searchInput').toLowerCase();
- const arr=machines.filter(m=>!q||[m.number,m.company,m.location,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
+ const arr=machines.filter(m=>!q||[m.number,m.company,m.location,m.address,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
  document.getElementById('searchResults').innerHTML=arr.length?arr.map(machineCard).join(''):`<div class="empty">${q?'Keine passenden Automaten gefunden.':'Suchbegriff eingeben.'}</div>`;
 }
 function renderList(){
  const q=(document.getElementById('listSearch').value||'').toLowerCase();
  document.getElementById('filterBar').innerHTML=types.map(t=>`<button class="chip ${currentFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('');
  let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter));
- if(q)arr=arr.filter(m=>[m.number,m.company,m.location,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
+ if(q)arr=arr.filter(m=>[m.number,m.company,m.location,m.address,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
  document.getElementById('machineList').innerHTML=arr.length?arr.map(machineCard).join(''):`<div class="empty">Keine Automaten gefunden.</div>`;
 }
 function setFilter(f){currentFilter=f;renderList()}
@@ -179,11 +203,11 @@ function showDetail(id){
  <div style="font-size:36px">${icons[m.type]||'⚙️'}</div><h2 style="margin:6px 0">${esc(m.number)}</h2><p class="sub">${esc(m.type)}${m.name?' · '+esc(m.name):''}</p>
  <div class="section-title" style="margin-top:20px">Standort</div>
  <div class="detail-grid">
- ${detail('Firma',m.company)}${detail('Standort',m.location)}${detail('Station',m.station)}${detail('Stock',m.floor)}
+ ${detail('Firma',m.company)}${detail('Standort',m.location)}${detail('Adresse',m.address)}${detail('Station',m.station)}${detail('Stock',m.floor)}
  </div>
  <div class="section-title" style="margin-top:20px">Technische Daten</div>
  <div class="detail-grid">${detail('Seriennummer',m.serial)}${detail('Automatentyp',m.type)}</div>
- <div class="section-title" style="margin-top:20px">Bemerkung</div><div class="detail">${esc(m.notes||'Keine Bemerkung')}</div>
+ <div class="section-title" style="margin-top:20px">Serviceeinsätze</div>${serviceDetails(m.services)}<div class="section-title" style="margin-top:20px">Bemerkung</div><div class="detail">${esc(m.notes||'Keine Bemerkung')}</div>
  <div class="row" style="margin-top:16px"><button class="btn primary" onclick="editMachine('${m.id}')">✏️ Bearbeiten</button><button class="btn danger" onclick="deleteMachine('${m.id}')">🗑️ Löschen</button></div>
  </div>`;
  showView('detail');
@@ -191,7 +215,7 @@ function showDetail(id){
 function detail(k,v){return `<div class="detail"><small>${k}</small><b>${esc(v||'—')}</b></div>`}
 function editMachine(id){
  const m=machines.find(x=>x.id===id);if(!m)return;
- ['number','type','name','company','location','station','floor','serial','notes'].forEach(k=>document.getElementById(k).value=m[k]||'');
+ ['number','type','name','company','location','address','station','floor','serial','notes'].forEach(k=>document.getElementById(k).value=m[k]||''); renderServiceRows(m.services||[]);
  document.getElementById('editId').value=id;document.getElementById('formTitle').textContent='Automat bearbeiten';showView('form');
 }
 function deleteMachine(id){
@@ -211,6 +235,7 @@ function clearAll(){if(confirm('Wirklich ALLE Automaten löschen? Diese Aktion k
 function updateDataInfo(){document.getElementById('dataInfo').textContent=`${machines.length} Automaten lokal auf diesem Gerät gespeichert.`}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 updateHome();
+renderServiceRows([]);
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
