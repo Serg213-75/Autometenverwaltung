@@ -30,7 +30,7 @@ label{font-size:13px;color:var(--muted);display:block;margin:13px 0 6px}input,se
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}
 .nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
 .service-row{background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
-.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}
+.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}.parts-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}.part-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.part-row .remove-part{margin-top:8px}.portion-wrap{display:none}.coffee-only{display:none}
 @media(min-width:650px){.stats{grid-template-columns:repeat(5,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
 .modal{position:fixed;inset:0;background:#0008;z-index:30;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modal-card{width:min(700px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px}.signature-pad{width:100%;height:180px;border:1px dashed #9aa6b2;border-radius:12px;background:#fff;touch-action:none}.small-note{font-size:12px;color:var(--muted)}.service-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.service-actions button{flex:1;min-width:140px}.print-only{display:none}@media print{body{background:#fff}.app>header,.app>main,.app>nav,.modal{display:none!important}.print-only{display:block!important}}
 </style>
@@ -75,7 +75,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
       <input type="hidden" id="editId">
       <label>Automatennummer *</label><input id="number" required placeholder="z. B. A-102">
       <label>Automatentyp *</label>
-      <select id="type" required>
+      <select id="type" required onchange="refreshPortionFields()">
         <option value="">Bitte auswählen</option><option>Kaffeeautomat</option><option>Snackautomat</option><option>Wasserspender</option><option>KG Automat</option><option>Foodautomat</option><option>Geldaufwerter</option>
       </select>
       <label>Automatenname</label><input id="name" list="suggestName" autocomplete="off" placeholder="z. B. ES9100, SXE8, FK230">
@@ -177,12 +177,28 @@ function resetForm(){
 function addServiceRow(data={}){
   const wrap=document.getElementById('serviceRows');
   const row=document.createElement('div'); row.className='service-row';
-  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><textarea class="service-error" placeholder="Welcher Fehler wurde festgestellt?">${esc(data.errorDescription||'')}</textarea></div><div style="margin-top:8px"><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
+  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><textarea class="service-error" placeholder="Welcher Fehler wurde festgestellt?">${esc(data.errorDescription||'')}</textarea></div><div style="margin-top:8px"><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
   const from=row.querySelector('.service-from'), to=row.querySelector('.service-to'), duration=row.querySelector('.service-duration');
   function calcDuration(){ if(!from.value||!to.value){duration.value='';return;} let [fh,fm]=from.value.split(':').map(Number),[th,tm]=to.value.split(':').map(Number); let mins=(th*60+tm)-(fh*60+fm); if(mins<0) mins+=24*60; duration.value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.'; }
   from.addEventListener('input',calcDuration); to.addEventListener('input',calcDuration); calcDuration();
   row.dataset.technician=data.technician||''; row.dataset.printedName=data.printedName||''; row.dataset.signature=data.signature||'';
   wrap.appendChild(row);
+  setPortionVisibility(row);
+  (data.parts||[]).forEach(part=>addPartRow(row.querySelector('.parts-box'),part));
+}
+function setPortionVisibility(row){
+  const isCoffee=document.getElementById('type').value==='Kaffeeautomat';
+  const wrap=row?.querySelector('.portion-wrap'); if(wrap)wrap.style.display=isCoffee?'block':'none';
+}
+function refreshPortionFields(){document.querySelectorAll('#serviceRows .service-row').forEach(setPortionVisibility)}
+function addPartRow(box,data={}){
+  const list=box.querySelector('.parts-list');
+  const row=document.createElement('div'); row.className='part-row';
+  row.innerHTML=`<div><label>Bezeichnung</label><input class="part-name" placeholder="z. B. Lüfter, Pumpe …" value="${esc(data.name||'')}"></div><div style="margin-top:8px"><label>Menge</label><input type="number" min="0" step="1" class="part-qty" value="${esc(data.qty??1)}"></div><button type="button" class="btn danger remove-part" onclick="this.parentElement.remove()">🗑️ Ersatzteil entfernen</button>`;
+  list.appendChild(row);
+}
+function readParts(serviceRow){
+  return [...serviceRow.querySelectorAll('.part-row')].map(r=>({name:r.querySelector('.part-name').value.trim(),qty:parseFloat(r.querySelector('.part-qty').value)||0})).filter(p=>p.name);
 }
 function renderServiceRows(services){
   const wrap=document.getElementById('serviceRows'); wrap.innerHTML='';
@@ -190,12 +206,12 @@ function renderServiceRows(services){
   if(!services || !services.length) addServiceRow();
 }
 function readServices(){
-  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,errorDescription:r.querySelector('.service-error').value.trim(),performance:r.querySelector('.service-performance').value.trim(),technician:r.dataset.technician||'',printedName:r.dataset.printedName||'',signature:r.dataset.signature||''})).filter(x=>x.date||x.from||x.to||x.performance||x.errorDescription);
+  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,portions:r.querySelector('.service-portions')?.value?parseInt(r.querySelector('.service-portions').value,10):null,errorDescription:r.querySelector('.service-error').value.trim(),performance:r.querySelector('.service-performance').value.trim(),parts:readParts(r),technician:r.dataset.technician||'',printedName:r.dataset.printedName||'',signature:r.dataset.signature||''})).filter(x=>x.date||x.from||x.to||x.performance||x.errorDescription||x.portions!==null||x.parts.length);
 }
 function serviceDetails(services){
  const arr=services||[];
  if(!arr.length) return '<div class="detail">Keine Serviceeinsätze eingetragen.</div>';
- return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div><div class="sub" style="margin-top:4px"><b>Fehler:</b> ${esc(x.errorDescription||'—')}</div><div class="sub" style="margin-top:4px"><b>Leistung:</b> ${esc(x.performance||'—')}</div><div class="service-actions"><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'pdf')">📄 Lieferschein PDF</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'email')">✉️ E-Mail</button></div></div>`).join('')}</div>`;
+ return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div>${x.portions!==null&&x.portions!==undefined&&x.portions!==''?`<div class="sub" style="margin-top:4px"><b>Zähler:</b> ${Number(x.portions).toLocaleString('de-DE')} Portionen</div>`:''}<div class="sub" style="margin-top:4px"><b>Fehler:</b> ${esc(x.errorDescription||'—')}</div><div class="sub" style="margin-top:4px"><b>Leistung:</b> ${esc(x.performance||'—')}</div>${(x.parts||[]).length?`<div class="sub" style="margin-top:6px"><b>Ersatzteile:</b> ${(x.parts||[]).map(p=>`${esc(p.name)} (${p.qty} Stück)`).join(', ')}</div>`:''}<div class="service-actions"><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'pdf')">📄 Lieferschein PDF</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'email')">✉️ E-Mail</button></div></div>`).join('')}</div>`;
 }
 let currentDetailId='';
 
@@ -335,10 +351,17 @@ function buildServicePdf(m,s){
     ensure(30); y=addPdfWrapped(doc,label,value,margin,y,contentW); y+=3;
   }
   y+=8; ensure(40); doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Serviceeinsatz',margin,y);y+=18;
-  const serviceFields=[['Datum',s.date],['Arbeitszeit',s.from&&s.to?`${s.from} bis ${s.to}`:(s.from||s.to)],['Dauer',s.duration],['Fehlerbeschreibung',s.errorDescription],['Leistung',s.performance]];
+  const serviceFields=[['Datum',s.date],['Arbeitszeit',s.from&&s.to?`${s.from} bis ${s.to}`:(s.from||s.to)],['Dauer',s.duration],['Zähler (Portionen)',s.portions!==null&&s.portions!==undefined&&s.portions!==''?Number(s.portions).toLocaleString('de-DE'):'' ],['Fehlerbeschreibung',s.errorDescription],['Leistung',s.performance]];
   for(const [label,value] of serviceFields){
-    if(!String(value||'').trim())continue;
+    if(!String(value??'').trim())continue;
     ensure(35); y=addPdfWrapped(doc,label,value,margin,y,contentW); y+=3;
+  }
+  if((s.parts||[]).length){
+    y+=8; ensure(80); doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Ersatzteile',margin,y);y+=18;
+    for(const p of s.parts){
+      const partText=`${p.name} – ${p.qty} Stück`;
+      ensure(30); y=addPdfWrapped(doc,'Ersatzteil',partText,margin,y,contentW); y+=3;
+    }
   }
   y+=8; ensure(70); doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Techniker / Bestätigung',margin,y);y+=18;
   if(s.technician){y=addPdfWrapped(doc,'Techniker',s.technician,margin,y,contentW);y+=3;}
@@ -384,7 +407,8 @@ async function prepareEmail(m,s){
       m.company?`Firma: ${m.company}`:'',m.location?`Standort: ${m.location}`:'',m.address?`Adresse: ${m.address}`:'',
       m.station?`Station: ${m.station}`:'',`Automat: ${m.number||''}${m.name?' / '+m.name:''}`,
       s.date?`Datum: ${s.date}`:'',s.from||s.to?`Arbeitszeit: ${s.from||''} bis ${s.to||''}`:'',s.duration?`Dauer: ${s.duration}`:'',
-      s.errorDescription?`Fehlerbeschreibung: ${s.errorDescription}`:'',s.performance?`Leistung: ${s.performance}`:'',s.technician?`Techniker: ${s.technician}`:'',
+      s.portions!==null&&s.portions!==undefined&&s.portions!==''?`Zähler (Portionen): ${Number(s.portions).toLocaleString('de-DE')}`:'',s.errorDescription?`Fehlerbeschreibung: ${s.errorDescription}`:'',s.performance?`Leistung: ${s.performance}`:'',
+      (s.parts||[]).length?`Ersatzteile: ${(s.parts||[]).map(p=>`${p.name} (${p.qty} Stück)`).join(', ')}`:'',s.technician?`Techniker: ${s.technician}`:'',
       '','Viele Grüße'
     ].filter(Boolean).join('\n');
     if(navigator.canShare && navigator.canShare({files:[file]})){
