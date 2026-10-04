@@ -129,6 +129,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <label>2 – Unterschrift</label><canvas id="signaturePad" class="signature-pad"></canvas>
     <div class="row" style="margin-top:7px"><button type="button" class="btn secondary" onclick="clearSignature()">Unterschrift löschen</button></div>
     <label>3 – Name mit Druckbuchstaben</label><input id="modalPrintedName" placeholder="Vorname Nachname">
+    <label>4 – E-Mailadresse Kunde</label><input id="modalCustomerEmail" type="email" placeholder="kunde@firma.de">
     <div class="row" style="margin-top:14px"><button class="btn secondary" onclick="closeServiceModal()">Abbrechen</button><button class="btn primary" onclick="confirmServiceDocument()">Weiter</button></div>
     <div class="small-note" style="margin-top:10px">Beim PDF öffnet sich direkt die iPhone-Teilen-Funktion. Dort kannst du „In Dateien sichern“, Mail, WhatsApp usw. auswählen.</div>
   </div>
@@ -177,7 +178,7 @@ function resetForm(){
 function addServiceRow(data={}){
   const wrap=document.getElementById('serviceRows');
   const row=document.createElement('div'); row.className='service-row';
-  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><textarea class="service-error" placeholder="Welcher Fehler wurde festgestellt?">${esc(data.errorDescription||'')}</textarea></div><div style="margin-top:8px"><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
+  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="row" style="margin-top:8px"><div><label>Anfahrt / Minuten</label><input type="number" min="0" step="1" class="service-travel-minutes" value="${esc(data.travelMinutes??'')}" placeholder="z. B. 30"></div><div><label>Anfahrt / Kilometer</label><input type="number" min="0" step="0.1" class="service-travel-km" value="${esc(data.travelKm??'')}" placeholder="z. B. 25,5"></div></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><textarea class="service-error" placeholder="Welcher Fehler wurde festgestellt?">${esc(data.errorDescription||'')}</textarea></div><div style="margin-top:8px"><label>Leistung</label><input class="service-performance" placeholder="z. B. Reinigung, Reparatur …" value="${esc(data.performance||'')}"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div><button type="button" class="btn danger" style="margin-top:7px" onclick="this.parentElement.remove()">🗑️ Serviceeinsatz entfernen</button>`;
   const from=row.querySelector('.service-from'), to=row.querySelector('.service-to'), duration=row.querySelector('.service-duration');
   function calcDuration(){ if(!from.value||!to.value){duration.value='';return;} let [fh,fm]=from.value.split(':').map(Number),[th,tm]=to.value.split(':').map(Number); let mins=(th*60+tm)-(fh*60+fm); if(mins<0) mins+=24*60; duration.value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.'; }
   from.addEventListener('input',calcDuration); to.addEventListener('input',calcDuration); calcDuration();
@@ -206,12 +207,12 @@ function renderServiceRows(services){
   if(!services || !services.length) addServiceRow();
 }
 function readServices(){
-  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,portions:r.querySelector('.service-portions')?.value?parseInt(r.querySelector('.service-portions').value,10):null,errorDescription:r.querySelector('.service-error').value.trim(),performance:r.querySelector('.service-performance').value.trim(),parts:readParts(r),technician:r.dataset.technician||'',printedName:r.dataset.printedName||'',signature:r.dataset.signature||''})).filter(x=>x.date||x.from||x.to||x.performance||x.errorDescription||x.portions!==null||x.parts.length);
+  return [...document.querySelectorAll('#serviceRows .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,travelMinutes:r.querySelector('.service-travel-minutes')?.value?parseInt(r.querySelector('.service-travel-minutes').value,10):null,travelKm:r.querySelector('.service-travel-km')?.value?parseFloat(r.querySelector('.service-travel-km').value):null,portions:r.querySelector('.service-portions')?.value?parseInt(r.querySelector('.service-portions').value,10):null,errorDescription:r.querySelector('.service-error').value.trim(),performance:r.querySelector('.service-performance').value.trim(),parts:readParts(r),technician:r.dataset.technician||'',printedName:r.dataset.printedName||'',signature:r.dataset.signature||''})).filter(x=>x.date||x.from||x.to||x.performance||x.errorDescription||x.portions!==null||x.travelMinutes!==null||x.travelKm!==null||x.parts.length);
 }
 function serviceDetails(services){
  const arr=services||[];
  if(!arr.length) return '<div class="detail">Keine Serviceeinsätze eingetragen.</div>';
- return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div>${x.portions!==null&&x.portions!==undefined&&x.portions!==''?`<div class="sub" style="margin-top:4px"><b>Zähler:</b> ${Number(x.portions).toLocaleString('de-DE')} Portionen</div>`:''}<div class="sub" style="margin-top:4px"><b>Fehler:</b> ${esc(x.errorDescription||'—')}</div><div class="sub" style="margin-top:4px"><b>Leistung:</b> ${esc(x.performance||'—')}</div>${(x.parts||[]).length?`<div class="sub" style="margin-top:6px"><b>Ersatzteile:</b> ${(x.parts||[]).map(p=>`${esc(p.name)} (${p.qty} Stück)`).join(', ')}</div>`:''}<div class="service-actions"><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'pdf')">📄 Lieferschein PDF</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'email')">✉️ E-Mail</button></div></div>`).join('')}</div>`;
+ return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><b>${esc(x.date||'—')}</b><div class="sub" style="margin-top:4px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div>${x.travelMinutes!==null&&x.travelMinutes!==undefined?`<div class="sub" style="margin-top:4px"><b>Anfahrt:</b> ${x.travelMinutes} Min.</div>`:''}${x.travelKm!==null&&x.travelKm!==undefined?`<div class="sub" style="margin-top:4px"><b>Anfahrt:</b> ${String(x.travelKm).replace('.',',')} km</div>`:''}${x.portions!==null&&x.portions!==undefined&&x.portions!==''?`<div class="sub" style="margin-top:4px"><b>Zähler:</b> ${Number(x.portions).toLocaleString('de-DE')} Portionen</div>`:''}<div class="sub" style="margin-top:4px"><b>Fehler:</b> ${esc(x.errorDescription||'—')}</div><div class="sub" style="margin-top:4px"><b>Leistung:</b> ${esc(x.performance||'—')}</div>${(x.parts||[]).length?`<div class="sub" style="margin-top:6px"><b>Ersatzteile:</b> ${(x.parts||[]).map(p=>`${esc(p.name)} (${p.qty} Stück)`).join(', ')}</div>`:''}<div class="service-actions"><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'pdf')">📄 Lieferschein PDF</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'email')">✉️ E-Mail</button></div></div>`).join('')}</div>`;
 }
 let currentDetailId='';
 
@@ -286,6 +287,7 @@ function openServiceDocument(machineId,index,mode){
   const s=machines.find(m=>m.id===machineId)?.services?.[index]||{};
   document.getElementById('modalTechnician').value=s.technician||'';
   document.getElementById('modalPrintedName').value=s.printedName||'';
+  document.getElementById('modalCustomerEmail').value=s.customerEmail||'';
   document.getElementById('serviceModal').classList.add('open');
   setTimeout(()=>setupSignature(s.signature||''),50);
 }
@@ -302,10 +304,11 @@ function clearSignature(){const c=document.getElementById('signaturePad');if(sig
 function confirmServiceDocument(){
  const m=machines.find(x=>x.id===pendingDoc.machineId); if(!m)return;
  const s=(m.services||[])[pendingDoc.serviceIndex]; if(!s)return;
- const tech=document.getElementById('modalTechnician').value.trim(), printed=document.getElementById('modalPrintedName').value.trim();
+ const tech=document.getElementById('modalTechnician').value.trim(), printed=document.getElementById('modalPrintedName').value.trim(), customerEmail=document.getElementById('modalCustomerEmail').value.trim();
  if(!tech||!printed){alert('Bitte Techniker und Name in Druckbuchstaben ausfüllen.');return;}
+ if(customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)){alert('Bitte eine gültige E-Mailadresse eingeben.');return;}
  const c=document.getElementById('signaturePad'), sig=c.toDataURL('image/png');
- s.technician=tech; s.printedName=printed; s.signature=sig; persist(); closeServiceModal();
+ s.technician=tech; s.printedName=printed; s.customerEmail=customerEmail; s.signature=sig; persist(); closeServiceModal();
  if(pendingDoc.mode==='email') prepareEmail(m,s); else printServiceSlip(m,s);
 }
 function safeFilePart(v){return String(v||'').trim().replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,'_').replace(/_+/g,'_')||'ohne_Angabe';}
@@ -351,7 +354,7 @@ function buildServicePdf(m,s){
     ensure(30); y=addPdfWrapped(doc,label,value,margin,y,contentW); y+=3;
   }
   y+=8; ensure(40); doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Serviceeinsatz',margin,y);y+=18;
-  const serviceFields=[['Datum',s.date],['Arbeitszeit',s.from&&s.to?`${s.from} bis ${s.to}`:(s.from||s.to)],['Dauer',s.duration],['Zähler (Portionen)',s.portions!==null&&s.portions!==undefined&&s.portions!==''?Number(s.portions).toLocaleString('de-DE'):'' ],['Fehlerbeschreibung',s.errorDescription],['Leistung',s.performance]];
+  const serviceFields=[['Datum',s.date],['Arbeitszeit',s.from&&s.to?`${s.from} bis ${s.to}`:(s.from||s.to)],['Dauer',s.duration],['Anfahrt / Minuten',s.travelMinutes!==null&&s.travelMinutes!==undefined&&s.travelMinutes!==''?String(s.travelMinutes)+' Min.':''],['Anfahrt / Kilometer',s.travelKm!==null&&s.travelKm!==undefined&&s.travelKm!==''?String(s.travelKm).replace('.',',')+' km':''],['Zähler (Portionen)',s.portions!==null&&s.portions!==undefined&&s.portions!==''?Number(s.portions).toLocaleString('de-DE'):'' ],['Fehlerbeschreibung',s.errorDescription],['Leistung',s.performance]];
   for(const [label,value] of serviceFields){
     if(!String(value??'').trim())continue;
     ensure(35); y=addPdfWrapped(doc,label,value,margin,y,contentW); y+=3;
@@ -415,7 +418,7 @@ async function prepareEmail(m,s){
       await navigator.share({files:[file],title:subject,text});
       return;
     }
-    const mail='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(text);
+    const mail='mailto:'+(s.customerEmail?encodeURIComponent(s.customerEmail):'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(text);
     window.location.href=mail;
   }catch(err){
     if(err && err.name==='AbortError')return;
