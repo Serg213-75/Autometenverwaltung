@@ -105,6 +105,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <form id="serviceFormElement" onsubmit="saveService(event)">
       <div id="newServiceRows"></div>
       <button class="btn primary" style="margin-top:14px">💾 Serviceeinsatz speichern</button>
+      <button type="button" id="deleteServiceBtn" class="btn danger" style="margin-top:9px;display:none" onclick="deleteService()">🗑️ Serviceeinsatz löschen</button>
       <button type="button" class="btn secondary" style="margin-top:9px" onclick="showDetail(serviceMachineId)">Abbrechen</button>
     </form>
   </div>
@@ -378,6 +379,7 @@ function newService(machineId){
  document.getElementById('serviceMachineName').textContent=`${m.number}${m.name?' · '+m.name:''} · ${m.company||'Keine Firma'}`;
  document.querySelector('#serviceForm .section-title').textContent='Serviceeinsatz einfügen';
  document.querySelector('#serviceFormElement .btn.primary').textContent='💾 Serviceeinsatz speichern';
+ document.getElementById('deleteServiceBtn').style.display='none';
  const draftRaw=localStorage.getItem(SERVICE_DRAFT_PREFIX+machineId);
  let draft=null;
  if(draftRaw){try{draft=JSON.parse(draftRaw);}catch(e){draft=null;}}
@@ -394,6 +396,7 @@ function editService(machineId,index){
  document.getElementById('serviceMachineName').textContent=`${m.number}${m.name?' · '+m.name:''} · ${m.company||'Keine Firma'}`;
  document.querySelector('#serviceForm .section-title').textContent='Serviceeinsatz bearbeiten';
  document.querySelector('#serviceFormElement .btn.primary').textContent='💾 Änderungen speichern';
+ document.getElementById('deleteServiceBtn').style.display='block';
  serviceTimerStarted=false; serviceTimerFinished=false;
  renderServiceRows([s], 'newServiceRows');
  updateServiceTimerUi();
@@ -423,6 +426,23 @@ function saveService(e){
  persist();
  showDetail(m.id);
 }
+function deleteService(){
+ const m=machines.find(x=>x.id===serviceMachineId);
+ if(!m || serviceEditIndex===null || !Array.isArray(m.services) || !m.services[serviceEditIndex]){
+   alert('Dieser Serviceeinsatz konnte nicht gefunden werden.');
+   return;
+ }
+ const s=m.services[serviceEditIndex];
+ const datum=s.date||'ohne Datum';
+ if(!confirm(`Serviceeinsatz vom ${datum} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+ m.services.splice(serviceEditIndex,1);
+ m.updatedAt=new Date().toISOString();
+ clearServiceDraft();
+ serviceTimerStarted=false; serviceTimerFinished=false; serviceEditIndex=null;
+ persist();
+ showDetail(m.id);
+}
+
 function deleteMachine(id){
  if(!confirm('Diesen Automaten wirklich löschen?'))return;
  localStorage.removeItem(SERVICE_DRAFT_PREFIX+id); machines=machines.filter(m=>m.id!==id);persist();showView('list');
