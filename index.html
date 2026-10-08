@@ -105,7 +105,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <form id="serviceFormElement" onsubmit="saveService(event)">
       <div id="newServiceRows"></div>
       <button class="btn primary" style="margin-top:14px">💾 Serviceeinsatz speichern</button>
-      <button type="button" id="deleteServiceBtn" class="btn danger" style="margin-top:9px;display:none" onclick="deleteService()">🗑️ Serviceeinsatz löschen</button>
+      <button type="button" id="deleteServiceBtn" class="btn danger" formnovalidate style="margin-top:9px;display:none" onclick="event.preventDefault();event.stopPropagation();window.deleteService();return false;">🗑️ Serviceeinsatz löschen</button>
       <button type="button" class="btn secondary" style="margin-top:9px" onclick="showDetail(serviceMachineId)">Abbrechen</button>
     </form>
   </div>
@@ -450,20 +450,26 @@ function saveService(e){
  showDetail(m.id);
 }
 function deleteService(){
- const m=machines.find(x=>x.id===serviceMachineId);
- if(!m || serviceEditIndex===null || !Array.isArray(m.services) || !m.services[serviceEditIndex]){
-   alert('Dieser Serviceeinsatz konnte nicht gefunden werden.');
-   return;
- }
- const s=m.services[serviceEditIndex];
- const datum=s.date||'ohne Datum';
- if(!confirm(`Serviceeinsatz vom ${datum} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
- m.services.splice(serviceEditIndex,1);
- m.updatedAt=new Date().toISOString();
- clearServiceDraft();
- serviceTimerStarted=false; serviceTimerFinished=false; serviceEditIndex=null;
- persist();
- showDetail(m.id);
+  const machineId=serviceMachineId;
+  const index=serviceEditIndex;
+  const m=machines.find(x=>x.id===machineId);
+  if(!m || index===null || index===undefined || !Array.isArray(m.services) || !m.services[index]){
+    alert('Dieser Serviceeinsatz konnte nicht gefunden werden.');
+    return false;
+  }
+  const s=m.services[index];
+  const datum=s.date||'ohne Datum';
+  if(!window.confirm(`Serviceeinsatz vom ${datum} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return false;
+  m.services.splice(index,1);
+  m.updatedAt=new Date().toISOString();
+  if(machineId) localStorage.removeItem(SERVICE_DRAFT_PREFIX+machineId);
+  serviceTimerStarted=false;
+  serviceTimerFinished=false;
+  serviceEditIndex=null;
+  serviceMachineId='';
+  persist();
+  showDetail(m.id);
+  return false;
 }
 
 function deleteMachine(id){
