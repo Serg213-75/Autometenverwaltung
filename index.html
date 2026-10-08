@@ -28,8 +28,8 @@ label{font-size:13px;color:var(--muted);display:block;margin:13px 0 6px}input,se
 .row{display:flex;gap:10px}.row>*{flex:1}.toolbar{display:flex;gap:8px;overflow:auto;margin:10px 0 14px}.chip{white-space:nowrap;background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:20px}.chip.active{background:#e8f2fd;color:var(--blue);border-color:#a9cdf2}
 .machine{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px}.machine-top{display:flex;justify-content:space-between;gap:10px}.machine h3{margin:0 0 5px;font-size:17px}.machine p{margin:3px 0;color:var(--muted);font-size:13px}.badge{font-size:11px;background:#eef3f8;padding:6px 8px;border-radius:10px;white-space:nowrap;height:max-content}.empty{text-align:center;color:var(--muted);padding:40px 15px}.back{background:none;padding:0;color:var(--blue);font-weight:600;margin-bottom:12px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.detail{background:#f7f9fb;border-radius:12px;padding:11px}.detail small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.detail b{font-size:14px;word-break:break-word}
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}
-.nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
-.service-row{background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
+.nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
+.service-row{background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}.timer-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 12px}.timer-btn{padding:14px;border-radius:13px;font-weight:800;background:#eef3f8;color:var(--text)}.timer-btn.start{background:#eaf8f0;color:var(--green)}.timer-btn.finish{background:#fff0f0;color:var(--danger)}.timer-btn:disabled{opacity:.45;cursor:not-allowed}.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
 .file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}.parts-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}.part-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.part-row .remove-part{margin-top:8px}.portion-wrap{display:none}.coffee-only{display:none}
 @media(min-width:650px){.stats{grid-template-columns:repeat(5,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
 .modal{position:fixed;inset:0;background:#0008;z-index:30;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modal-card{width:min(700px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px}.signature-pad{width:100%;height:180px;border:1px dashed #9aa6b2;border-radius:12px;background:#fff;touch-action:none}.small-note{font-size:12px;color:var(--muted)}.service-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.service-actions button{flex:1;min-width:140px}.print-only{display:none}@media print{body{background:#fff}.app>header,.app>main,.app>nav,.modal{display:none!important}.print-only{display:block!important}}
@@ -96,6 +96,12 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   <div class="card">
     <div class="section-title">Serviceeinsatz einfügen</div>
     <p id="serviceMachineName" class="sub" style="margin-top:-4px"></p>
+    <div class="notice">Du kannst den Einsatz wie bisher manuell ausfüllen oder zuerst die Zeitmessung starten. Beim Start werden Datum und „Von“ automatisch eingetragen. Mit „Einsatz fertig“ wird „Bis“ automatisch eingetragen.</div>
+    <div class="timer-actions">
+      <button type="button" id="serviceStartBtn" class="timer-btn start" onclick="startServiceTimer()">▶️ Serviceeinsatz starten</button>
+      <button type="button" id="serviceFinishBtn" class="timer-btn finish" onclick="finishServiceTimer()" disabled>⏹️ Einsatz fertig</button>
+    </div>
+    <div id="serviceTimerStatus" class="small-note" style="margin:-3px 0 12px"></div>
     <form id="serviceFormElement" onsubmit="saveService(event)">
       <div id="newServiceRows"></div>
       <button class="btn primary" style="margin-top:14px">💾 Serviceeinsatz speichern</button>
@@ -187,6 +193,74 @@ function resetForm(){
 }
 let serviceMachineId='';
 let serviceEntryType='';
+let serviceTimerStarted=false;
+let serviceTimerFinished=false;
+const SERVICE_DRAFT_PREFIX='automatenverwaltung_service_draft_';
+function localDateTimeParts(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time:`${pad(d.getHours())}:${pad(d.getMinutes())}`};
+}
+function currentServiceRow(){return document.querySelector('#newServiceRows .service-row');}
+function updateServiceTimerUi(){
+  const start=document.getElementById('serviceStartBtn'), finish=document.getElementById('serviceFinishBtn'), status=document.getElementById('serviceTimerStatus');
+  if(!start||!finish||!status)return;
+  start.disabled=serviceTimerStarted;
+  finish.disabled=!serviceTimerStarted||serviceTimerFinished;
+  if(serviceTimerFinished){status.textContent='✅ Einsatz beendet. Du kannst die restlichen Angaben jetzt vervollständigen und speichern.';}
+  else if(serviceTimerStarted){
+    const r=currentServiceRow();
+    const from=r?.querySelector('.service-from')?.value||'';
+    status.textContent=from?`⏱️ Einsatz läuft seit ${from} Uhr.`:'⏱️ Einsatz läuft.';
+  }else status.textContent='';
+}
+function saveServiceDraft(){
+  const r=currentServiceRow(); if(!r||!serviceMachineId)return;
+  const rows=readServices('newServiceRows');
+  const raw={};
+  const row=r;
+  raw.date=row.querySelector('.service-date')?.value||'';
+  raw.from=row.querySelector('.service-from')?.value||'';
+  raw.to=row.querySelector('.service-to')?.value||'';
+  raw.duration=row.querySelector('.service-duration')?.value||'';
+  raw.travelMinutes=row.querySelector('.service-travel-minutes')?.value||'';
+  raw.travelKm=row.querySelector('.service-travel-km')?.value||'';
+  raw.portions=row.querySelector('.service-portions')?.value||'';
+  raw.errorDescription=row.querySelector('.service-error')?.value||'';
+  raw.performance=row.querySelector('.service-performance')?.value||'';
+  raw.parts=readParts(row);
+  raw.started=serviceTimerStarted; raw.finished=serviceTimerFinished;
+  localStorage.setItem(SERVICE_DRAFT_PREFIX+serviceMachineId,JSON.stringify(raw));
+}
+function clearServiceDraft(){if(serviceMachineId)localStorage.removeItem(SERVICE_DRAFT_PREFIX+serviceMachineId);}
+function startServiceTimer(){
+  const r=currentServiceRow(); if(!r)return;
+  if(serviceTimerStarted)return;
+  const now=localDateTimeParts();
+  r.querySelector('.service-date').value=now.date;
+  r.querySelector('.service-from').value=now.time;
+  r.querySelector('.service-to').value='';
+  r.querySelector('.service-duration').value='';
+  serviceTimerStarted=true; serviceTimerFinished=false;
+  saveServiceDraft(); updateServiceTimerUi();
+}
+function finishServiceTimer(){
+  const r=currentServiceRow(); if(!r||!serviceTimerStarted)return;
+  const now=localDateTimeParts();
+  r.querySelector('.service-to').value=now.time;
+  const from=r.querySelector('.service-from').value;
+  if(from){
+    let [fh,fm]=from.split(':').map(Number),[th,tm]=now.time.split(':').map(Number);
+    let mins=(th*60+tm)-(fh*60+fm); if(mins<0)mins+=24*60;
+    r.querySelector('.service-duration').value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.';
+  }
+  serviceTimerFinished=true;
+  saveServiceDraft(); updateServiceTimerUi();
+}
+function attachServiceDraftAutosave(){
+  const wrap=document.getElementById('newServiceRows'); if(!wrap)return;
+  wrap.querySelectorAll('input,textarea,select').forEach(el=>el.addEventListener('input',saveServiceDraft));
+}
 function addServiceRow(data={},targetId='serviceRows'){
   const wrap=document.getElementById(targetId);
   const row=document.createElement('div'); row.className='service-row';
@@ -198,6 +272,7 @@ function addServiceRow(data={},targetId='serviceRows'){
   wrap.appendChild(row);
   setPortionVisibility(row, targetId==='newServiceRows' ? serviceEntryType : document.getElementById('type').value);
   (data.parts||[]).forEach(part=>addPartRow(row.querySelector('.parts-box'),part));
+  if(targetId==='newServiceRows') attachServiceDraftAutosave();
 }
 function setPortionVisibility(row,typeOverride){
   const isCoffee=(typeOverride!==undefined ? typeOverride : document.getElementById('type').value)==='Kaffeeautomat';
@@ -209,6 +284,7 @@ function addPartRow(box,data={}){
   const row=document.createElement('div'); row.className='part-row';
   row.innerHTML=`<div><label>Bezeichnung</label><input class="part-name" placeholder="z. B. Lüfter, Pumpe …" value="${esc(data.name||'')}"></div><div style="margin-top:8px"><label>Menge</label><input type="number" min="0" step="1" class="part-qty" value="${esc(data.qty??1)}"></div><button type="button" class="btn danger remove-part" onclick="this.parentElement.remove()">🗑️ Ersatzteil entfernen</button>`;
   list.appendChild(row);
+  if(box.closest('#newServiceRows')) saveServiceDraft();
 }
 function readParts(serviceRow){
   return [...serviceRow.querySelectorAll('.part-row')].map(r=>({name:r.querySelector('.part-name').value.trim(),qty:parseFloat(r.querySelector('.part-qty').value)||0})).filter(p=>p.name);
@@ -278,7 +354,7 @@ function showDetail(id){
  </div>
  <div class="section-title" style="margin-top:20px">Technische Daten</div>
  <div class="detail-grid">${detail('Seriennummer',m.serial)}${detail('Automatentyp',m.type)}</div>
- <div class="section-title" style="margin-top:20px">Serviceeinsätze</div><button class="btn primary" style="margin-bottom:10px" onclick="newService('${m.id}')">➕ Serviceeinsatz einfügen</button>${serviceDetails(m.services)}<div class="section-title" style="margin-top:20px">Bemerkung</div><div class="detail">${esc(m.notes||'Keine Bemerkung')}</div>
+ <div class="section-title" style="margin-top:20px">Serviceeinsätze</div>${localStorage.getItem(SERVICE_DRAFT_PREFIX+m.id)?`<button class="btn green" style="margin-bottom:10px" onclick="newService('${m.id}')">⏱️ Laufenden Service fortsetzen</button>`:''}<button class="btn primary" style="margin-bottom:10px" onclick="newService('${m.id}')">➕ Serviceeinsatz einfügen</button>${serviceDetails(m.services)}<div class="section-title" style="margin-top:20px">Bemerkung</div><div class="detail">${esc(m.notes||'Keine Bemerkung')}</div>
  <div class="row" style="margin-top:16px"><button class="btn primary" onclick="editMachine('${m.id}')">✏️ Bearbeiten</button><button class="btn danger" onclick="deleteMachine('${m.id}')">🗑️ Löschen</button></div>
  </div>`;
  showView('detail');
@@ -293,7 +369,13 @@ function newService(machineId){
  const m=machines.find(x=>x.id===machineId); if(!m)return;
  serviceMachineId=machineId; serviceEntryType=m.type||'';
  document.getElementById('serviceMachineName').textContent=`${m.number}${m.name?' · '+m.name:''} · ${m.company||'Keine Firma'}`;
- renderServiceRows([], 'newServiceRows');
+ const draftRaw=localStorage.getItem(SERVICE_DRAFT_PREFIX+machineId);
+ let draft=null;
+ if(draftRaw){try{draft=JSON.parse(draftRaw);}catch(e){draft=null;}}
+ serviceTimerStarted=!!draft?.started;
+ serviceTimerFinished=!!draft?.finished;
+ renderServiceRows(draft?[draft]:[], 'newServiceRows');
+ updateServiceTimerUi();
  showView('serviceForm');
 }
 function saveService(e){
@@ -306,12 +388,14 @@ function saveService(e){
  m.services=Array.isArray(m.services)?m.services:[];
  m.services.unshift(s);
  m.updatedAt=new Date().toISOString();
+ clearServiceDraft();
+ serviceTimerStarted=false; serviceTimerFinished=false;
  persist();
  showDetail(m.id);
 }
 function deleteMachine(id){
  if(!confirm('Diesen Automaten wirklich löschen?'))return;
- machines=machines.filter(m=>m.id!==id);persist();showView('list');
+ localStorage.removeItem(SERVICE_DRAFT_PREFIX+id); machines=machines.filter(m=>m.id!==id);persist();showView('list');
 }
 
 let pendingDoc={machineId:null,serviceIndex:null,mode:'pdf'};
