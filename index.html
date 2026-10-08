@@ -96,7 +96,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   <div class="card">
     <div class="section-title">Serviceeinsatz einfügen</div>
     <p id="serviceMachineName" class="sub" style="margin-top:-4px"></p>
-    <div class="notice">Du kannst den Einsatz wie bisher manuell ausfüllen oder zuerst die Zeitmessung starten. Beim Start werden Datum und „Von“ automatisch eingetragen. Mit „Einsatz fertig“ wird „Bis“ automatisch eingetragen.</div>
+    <div class="notice">Du kannst den Einsatz wie bisher manuell ausfüllen oder zuerst die Zeitmessung starten. Beim Start werden Datum und „Von“ automatisch eingetragen. Mit „Einsatz fertig“ wird „Bis“ automatisch eingetragen. Bereits gespeicherte Einsätze können über „✏️ Bearbeiten“ jederzeit geändert werden.</div>
     <div class="timer-actions">
       <button type="button" id="serviceStartBtn" class="timer-btn start" onclick="startServiceTimer()">▶️ Serviceeinsatz starten</button>
       <button type="button" id="serviceFinishBtn" class="timer-btn finish" onclick="finishServiceTimer()" disabled>⏹️ Einsatz fertig</button>
@@ -195,6 +195,7 @@ let serviceMachineId='';
 let serviceEntryType='';
 let serviceTimerStarted=false;
 let serviceTimerFinished=false;
+let serviceEditIndex=null;
 const SERVICE_DRAFT_PREFIX='automatenverwaltung_service_draft_';
 function localDateTimeParts(){
   const d=new Date();
@@ -205,6 +206,11 @@ function currentServiceRow(){return document.querySelector('#newServiceRows .ser
 function updateServiceTimerUi(){
   const start=document.getElementById('serviceStartBtn'), finish=document.getElementById('serviceFinishBtn'), status=document.getElementById('serviceTimerStatus');
   if(!start||!finish||!status)return;
+  if(serviceEditIndex!==null){
+    start.disabled=true; finish.disabled=true;
+    status.textContent='✏️ Bearbeitungsmodus: Datum und Zeiten können direkt geändert werden.';
+    return;
+  }
   start.disabled=serviceTimerStarted;
   finish.disabled=!serviceTimerStarted||serviceTimerFinished;
   if(serviceTimerFinished){status.textContent='✅ Einsatz beendet. Du kannst die restlichen Angaben jetzt vervollständigen und speichern.';}
@@ -258,6 +264,7 @@ function finishServiceTimer(){
   saveServiceDraft(); updateServiceTimerUi();
 }
 function attachServiceDraftAutosave(){
+  if(serviceEditIndex!==null)return;
   const wrap=document.getElementById('newServiceRows'); if(!wrap)return;
   wrap.querySelectorAll('input,textarea,select').forEach(el=>el.addEventListener('input',saveServiceDraft));
 }
@@ -268,11 +275,11 @@ function addServiceRow(data={},targetId='serviceRows'){
   const from=row.querySelector('.service-from'), to=row.querySelector('.service-to'), duration=row.querySelector('.service-duration');
   function calcDuration(){ if(!from.value||!to.value){duration.value='';return;} let [fh,fm]=from.value.split(':').map(Number),[th,tm]=to.value.split(':').map(Number); let mins=(th*60+tm)-(fh*60+fm); if(mins<0) mins+=24*60; duration.value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.'; }
   from.addEventListener('input',calcDuration); to.addEventListener('input',calcDuration); calcDuration();
-  row.dataset.technician=data.technician||''; row.dataset.printedName=data.printedName||''; row.dataset.signature=data.signature||'';
+  row.dataset.technician=data.technician||''; row.dataset.printedName=data.printedName||''; row.dataset.customerEmail=data.customerEmail||''; row.dataset.signature=data.signature||'';
   wrap.appendChild(row);
   setPortionVisibility(row, targetId==='newServiceRows' ? serviceEntryType : document.getElementById('type').value);
   (data.parts||[]).forEach(part=>addPartRow(row.querySelector('.parts-box'),part));
-  if(targetId==='newServiceRows') attachServiceDraftAutosave();
+  if(targetId==='newServiceRows' && serviceEditIndex===null) attachServiceDraftAutosave();
 }
 function setPortionVisibility(row,typeOverride){
   const isCoffee=(typeOverride!==undefined ? typeOverride : document.getElementById('type').value)==='Kaffeeautomat';
@@ -284,7 +291,7 @@ function addPartRow(box,data={}){
   const row=document.createElement('div'); row.className='part-row';
   row.innerHTML=`<div><label>Bezeichnung</label><input class="part-name" placeholder="z. B. Lüfter, Pumpe …" value="${esc(data.name||'')}"></div><div style="margin-top:8px"><label>Menge</label><input type="number" min="0" step="1" class="part-qty" value="${esc(data.qty??1)}"></div><button type="button" class="btn danger remove-part" onclick="this.parentElement.remove()">🗑️ Ersatzteil entfernen</button>`;
   list.appendChild(row);
-  if(box.closest('#newServiceRows')) saveServiceDraft();
+  if(box.closest('#newServiceRows') && serviceEditIndex===null) saveServiceDraft();
 }
 function readParts(serviceRow){
   return [...serviceRow.querySelectorAll('.part-row')].map(r=>({name:r.querySelector('.part-name').value.trim(),qty:parseFloat(r.querySelector('.part-qty').value)||0})).filter(p=>p.name);
@@ -295,12 +302,12 @@ function renderServiceRows(services,targetId='serviceRows'){
   if(!services || !services.length) addServiceRow({},targetId);
 }
 function readServices(targetId='serviceRows'){
-  return [...document.querySelectorAll('#'+targetId+' .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,travelMinutes:r.querySelector('.service-travel-minutes')?.value?parseInt(r.querySelector('.service-travel-minutes').value,10):null,travelKm:r.querySelector('.service-travel-km')?.value?parseFloat(r.querySelector('.service-travel-km').value):null,portions:r.querySelector('.service-portions')?.value?parseInt(r.querySelector('.service-portions').value,10):null,errorDescription:r.querySelector('.service-error').value.trim(),performance:r.querySelector('.service-performance').value.trim(),parts:readParts(r),technician:r.dataset.technician||'',printedName:r.dataset.printedName||'',signature:r.dataset.signature||''})).filter(x=>x.date||x.from||x.to||x.performance||x.errorDescription||x.portions!==null||x.travelMinutes!==null||x.travelKm!==null||x.parts.length);
+  return [...document.querySelectorAll('#'+targetId+' .service-row')].map(r=>({date:r.querySelector('.service-date').value,from:r.querySelector('.service-from').value,to:r.querySelector('.service-to').value,duration:r.querySelector('.service-duration').value,travelMinutes:r.querySelector('.service-travel-minutes')?.value?parseInt(r.querySelector('.service-travel-minutes').value,10):null,travelKm:r.querySelector('.service-travel-km')?.value?parseFloat(r.querySelector('.service-travel-km').value):null,portions:r.querySelector('.service-portions')?.value?parseInt(r.querySelector('.service-portions').value,10):null,errorDescription:r.querySelector('.service-error').value.trim(),performance:r.querySelector('.service-performance').value.trim(),parts:readParts(r),technician:r.dataset.technician||'',printedName:r.dataset.printedName||'',customerEmail:r.dataset.customerEmail||'',signature:r.dataset.signature||''})).filter(x=>x.date||x.from||x.to||x.performance||x.errorDescription||x.portions!==null||x.travelMinutes!==null||x.travelKm!==null||x.parts.length);
 }
 function serviceDetails(services){
  const arr=services||[];
  if(!arr.length) return '<div class="detail">Noch keine Serviceeinsätze vorhanden.</div>';
- return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:12px 10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><div style="font-size:16px;font-weight:800">Serviceeinsatz vom ${esc(x.date||'—')}</div><div class="sub" style="margin-top:5px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div>${x.travelMinutes!==null&&x.travelMinutes!==undefined?`<div class="sub" style="margin-top:4px"><b>Anfahrt:</b> ${x.travelMinutes} Min.</div>`:''}${x.travelKm!==null&&x.travelKm!==undefined?`<div class="sub" style="margin-top:4px"><b>Anfahrt:</b> ${String(x.travelKm).replace('.',',')} km</div>`:''}${x.portions!==null&&x.portions!==undefined&&x.portions!==''?`<div class="sub" style="margin-top:4px"><b>Zähler:</b> ${Number(x.portions).toLocaleString('de-DE')} Portionen</div>`:''}${x.errorDescription?`<div class="sub" style="margin-top:4px"><b>Fehler:</b> ${esc(x.errorDescription)}</div>`:''}${x.performance?`<div class="sub" style="margin-top:4px"><b>Leistung:</b> ${esc(x.performance)}</div>`:''}${(x.parts||[]).length?`<div class="sub" style="margin-top:6px"><b>Ersatzteile:</b> ${(x.parts||[]).map(p=>`${esc(p.name)} (${p.qty} Stück)`).join(', ')}</div>`:''}<div class="service-actions"><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'pdf')">📄 Lieferschein PDF</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'email')">✉️ E-Mail</button></div></div>`).join('')}</div>`;
+ return `<div class="card" style="padding:10px">${arr.map((x,i)=>`<div style="padding:12px 10px;border-bottom:${i<arr.length-1?'1px solid var(--line)':'0'}"><div style="font-size:16px;font-weight:800">Serviceeinsatz vom ${esc(x.date||'—')}</div><div class="sub" style="margin-top:5px">${x.from||x.to?esc((x.from||'—')+' – '+(x.to||'—')+(x.duration?' · '+x.duration:'')):''}</div>${x.travelMinutes!==null&&x.travelMinutes!==undefined?`<div class="sub" style="margin-top:4px"><b>Anfahrt:</b> ${x.travelMinutes} Min.</div>`:''}${x.travelKm!==null&&x.travelKm!==undefined?`<div class="sub" style="margin-top:4px"><b>Anfahrt:</b> ${String(x.travelKm).replace('.',',')} km</div>`:''}${x.portions!==null&&x.portions!==undefined&&x.portions!==''?`<div class="sub" style="margin-top:4px"><b>Zähler:</b> ${Number(x.portions).toLocaleString('de-DE')} Portionen</div>`:''}${x.errorDescription?`<div class="sub" style="margin-top:4px"><b>Fehler:</b> ${esc(x.errorDescription)}</div>`:''}${x.performance?`<div class="sub" style="margin-top:4px"><b>Leistung:</b> ${esc(x.performance)}</div>`:''}${(x.parts||[]).length?`<div class="sub" style="margin-top:6px"><b>Ersatzteile:</b> ${(x.parts||[]).map(p=>`${esc(p.name)} (${p.qty} Stück)`).join(', ')}</div>`:''}<div class="service-actions"><button class="btn secondary" onclick="editService('${currentDetailId}',${i})">✏️ Bearbeiten</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'pdf')">📄 Lieferschein PDF</button><button class="btn secondary" onclick="openServiceDocument('${currentDetailId}',${i},'email')">✉️ E-Mail</button></div></div>`).join('')}</div>`;
 }
 
 let currentDetailId='';
@@ -367,8 +374,10 @@ function editMachine(id){
 }
 function newService(machineId){
  const m=machines.find(x=>x.id===machineId); if(!m)return;
- serviceMachineId=machineId; serviceEntryType=m.type||'';
+ serviceMachineId=machineId; serviceEntryType=m.type||''; serviceEditIndex=null;
  document.getElementById('serviceMachineName').textContent=`${m.number}${m.name?' · '+m.name:''} · ${m.company||'Keine Firma'}`;
+ document.querySelector('#serviceForm .section-title').textContent='Serviceeinsatz einfügen';
+ document.querySelector('#serviceFormElement .btn.primary').textContent='💾 Serviceeinsatz speichern';
  const draftRaw=localStorage.getItem(SERVICE_DRAFT_PREFIX+machineId);
  let draft=null;
  if(draftRaw){try{draft=JSON.parse(draftRaw);}catch(e){draft=null;}}
@@ -378,18 +387,39 @@ function newService(machineId){
  updateServiceTimerUi();
  showView('serviceForm');
 }
+function editService(machineId,index){
+ const m=machines.find(x=>x.id===machineId); if(!m||!Array.isArray(m.services)||!m.services[index])return;
+ serviceMachineId=machineId; serviceEntryType=m.type||''; serviceEditIndex=index;
+ const s=m.services[index];
+ document.getElementById('serviceMachineName').textContent=`${m.number}${m.name?' · '+m.name:''} · ${m.company||'Keine Firma'}`;
+ document.querySelector('#serviceForm .section-title').textContent='Serviceeinsatz bearbeiten';
+ document.querySelector('#serviceFormElement .btn.primary').textContent='💾 Änderungen speichern';
+ serviceTimerStarted=false; serviceTimerFinished=false;
+ renderServiceRows([s], 'newServiceRows');
+ updateServiceTimerUi();
+ showView('serviceForm');
+}
 function saveService(e){
  e.preventDefault();
  const m=machines.find(x=>x.id===serviceMachineId); if(!m)return;
  const rows=readServices('newServiceRows');
  if(!rows.length){alert('Bitte mindestens das Datum oder eine Serviceangabe eintragen.');return;}
  const s=rows[0];
- s.technician='';s.printedName='';s.customerEmail='';s.signature='';
  m.services=Array.isArray(m.services)?m.services:[];
- m.services.unshift(s);
+ if(serviceEditIndex!==null && m.services[serviceEditIndex]){
+   const old=m.services[serviceEditIndex];
+   s.technician=s.technician||old.technician||'';
+   s.printedName=s.printedName||old.printedName||'';
+   s.customerEmail=s.customerEmail||old.customerEmail||'';
+   s.signature=s.signature||old.signature||'';
+   m.services[serviceEditIndex]=s;
+ }else{
+   s.technician='';s.printedName='';s.customerEmail='';s.signature='';
+   m.services.unshift(s);
+ }
  m.updatedAt=new Date().toISOString();
  clearServiceDraft();
- serviceTimerStarted=false; serviceTimerFinished=false;
+ serviceTimerStarted=false; serviceTimerFinished=false; serviceEditIndex=null;
  persist();
  showDetail(m.id);
 }
