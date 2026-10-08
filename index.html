@@ -326,9 +326,25 @@ function saveMachine(e){
   if(editId){const i=machines.findIndex(m=>m.id===editId);machines[i]=obj}else machines.unshift(obj);
   persist();showDetail(obj.id);
 }
+function serviceDateKey(value){
+  const s=String(value||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m=s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  return m?`${m[3]}-${m[2]}-${m[1]}`:'';
+}
+function latestServiceDate(m){
+  return (m.services||[]).map(s=>serviceDateKey(s.date)).filter(Boolean).sort().pop()||'';
+}
+function formatServiceDate(value){
+  const key=serviceDateKey(value);
+  if(!key)return '';
+  const [y,mo,d]=key.split('-');
+  return `${d}.${mo}.${y}`;
+}
 function machineCard(m){
+ const lastService=latestServiceDate(m);
  return `<button class="machine" style="width:100%;text-align:left" onclick="showDetail('${m.id}')">
- <div class="machine-top"><div><h3>${icons[m.type]||'⚙️'} ${esc(m.number)}${m.name?' · '+esc(m.name):''}</h3><p>${esc(m.company||'Keine Firma')} · ${esc(m.location||'Kein Standort')}</p><p>${esc(m.station||'')}${m.floor?' · '+esc(m.floor):''}</p></div><span class="badge">${esc(m.type)}</span></div></button>`;
+ <div class="machine-top"><div><h3>${icons[m.type]||'⚙️'} ${esc(m.number)}${m.name?' · '+esc(m.name):''}</h3><p>${esc(m.company||'Keine Firma')} · ${esc(m.location||'Kein Standort')}</p><p>${esc(m.station||'')}${m.floor?' · '+esc(m.floor):''}</p>${lastService?`<p style="margin-top:5px"><b>Letzter Service:</b> ${esc(formatServiceDate(lastService))}</p>`:''}</div><span class="badge">${esc(m.type)}</span></div></button>`;
 }
 function renderResults(){
  const q=val('searchInput').toLowerCase();
@@ -340,12 +356,19 @@ function renderList(){
  document.getElementById('filterBar').innerHTML=types.map(t=>`<button class="chip ${currentFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('');
  let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter));
  if(q)arr=arr.filter(m=>[m.number,m.company,m.location,m.address,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
- // Reihenfolge: zuerst Firma, innerhalb der Firma nach Station, danach Automatennummer.
+ // Standardreihenfolge: neuester Serviceeinsatz zuerst.
+ // Automaten ohne Serviceeinsatz stehen am Ende. Bei gleichem Datum
+ // bleibt die bisherige Reihenfolge Firma -> Station -> Automatennummer erhalten.
  arr.sort((a,b)=>{
-   const c=(a.company||'').localeCompare(b.company||'','de-DE',{sensitivity:'base',numeric:true});
-   if(c)return c;
-   const st=(a.station||'').localeCompare(b.station||'','de-DE',{sensitivity:'base',numeric:true});
-   if(st)return st;
+   const da=latestServiceDate(a);
+   const db=latestServiceDate(b);
+   if(da!==db) return db.localeCompare(da);
+   if(da && db){
+     const c=(a.company||'').localeCompare(b.company||'','de-DE',{sensitivity:'base',numeric:true});
+     if(c)return c;
+     const st=(a.station||'').localeCompare(b.station||'','de-DE',{sensitivity:'base',numeric:true});
+     if(st)return st;
+   }
    return (a.number||'').localeCompare(b.number||'','de-DE',{sensitivity:'base',numeric:true});
  });
  document.getElementById('machineList').innerHTML=arr.length?arr.map(machineCard).join(''):`<div class="empty">Keine Automaten gefunden.</div>`;
