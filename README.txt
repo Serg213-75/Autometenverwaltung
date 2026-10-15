@@ -23,3 +23,8 @@ Die App muss über HTTPS auf einer Website erreichbar sein. Dann in Safari öffn
 Änderung in Version 14: Serviceeinsatz kann manuell oder per Start/Stopp-Zeitmessung erfasst werden.
 
 Änderung in Version 3: „Geldaufwerter“ ist jetzt als Automatentyp auswählbar.
+
+
+Version 16 Änderungen:
+- Neue Automatentypen: Flaschenrücknehmer und Eisautomat.
+- Serviceformular: Fehlerbeschreibung ist jetzt ein einzeiliges Feld; Leistung ist ein größeres mehrzeiliges Textfeld.
