@@ -28,3 +28,6 @@ Die App muss über HTTPS auf einer Website erreichbar sein. Dann in Safari öffn
 Version 16 Änderungen:
 - Neue Automatentypen: Flaschenrücknehmer und Eisautomat.
 - Serviceformular: Fehlerbeschreibung ist jetzt ein einzeiliges Feld; Leistung ist ein größeres mehrzeiliges Textfeld.
+
+
+Version 17: Stationsfeld vergrößert, Automaten- und Servicefotos, Google-Maps-Standort, deutsches Service-Datumsformat TT.MM.JJJJ, Firmen- und Standortfilter.
