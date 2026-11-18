@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Automaten">
 <link rel="manifest" href="manifest.json">
-<title>Automatenverwaltung v17</title>
+<title>Automatenverwaltung v18</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#0b6bcb;--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#66717d;--line:#e2e7ec;--danger:#c62828;--green:#178a4b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
@@ -30,7 +31,7 @@ label{font-size:13px;color:var(--muted);display:block;margin:13px 0 6px}input,se
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}
 .nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
 .service-row{background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}.timer-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 12px}.timer-btn{padding:14px;border-radius:13px;font-weight:800;background:#eef3f8;color:var(--text)}.timer-btn.start{background:#eaf8f0;color:var(--green)}.timer-btn.finish{background:#fff0f0;color:var(--danger)}.timer-btn:disabled{opacity:.45;cursor:not-allowed}.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
-.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}.parts-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}.part-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.part-row .remove-part{margin-top:8px}.portion-wrap{display:none}.coffee-only{display:none}.station-input{min-height:76px!important;resize:vertical}.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.filter-selects{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.photo-preview img{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}.parts-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}.part-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.part-row .remove-part{margin-top:8px}.portion-wrap{display:none}.coffee-only{display:none}.station-input{min-height:76px!important;resize:vertical}.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.filter-selects{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.photo-preview .photo-item{position:relative;width:82px;height:82px}.photo-preview img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.photo-remove{position:absolute;right:-6px;top:-6px;width:27px;height:27px;border-radius:50%;background:#c62828;color:white;font-weight:900;border:2px solid white}.map-picker{height:55vh;min-height:300px;border-radius:12px;overflow:hidden;margin:12px 0}
 @media(min-width:650px){.stats{grid-template-columns:repeat(5,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
 .modal{position:fixed;inset:0;background:#0008;z-index:30;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modal-card{width:min(700px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px}.signature-pad{width:100%;height:180px;border:1px dashed #9aa6b2;border-radius:12px;background:#fff;touch-action:none}.small-note{font-size:12px;color:var(--muted)}.service-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.service-actions button{flex:1;min-width:140px}.print-only{display:none}@media print{body{background:#fff}.app>header,.app>main,.app>nav,.modal{display:none!important}.print-only{display:block!important}}
 </style>
@@ -87,9 +88,11 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
       <label>Standort</label><input id="location" list="suggestLocation" autocomplete="off" placeholder="z. B. Öhringen, Crailsheim">
       <label>Adresse</label><input id="address" list="suggestAddress" autocomplete="off" placeholder="z. B. Hauptstrasse 1">
       <div class="row"><div><label>Station</label><textarea id="station" class="station-input" list="suggestStation" autocomplete="off" placeholder="Ausführliche Stationsangabe …"></textarea></div><div><label>Stock</label><select id="floor"><option value="">Bitte auswählen</option><option>UG</option><option>EG</option><option>1OG</option><option>2OG</option><option>3OG</option><option>4OG</option><option>5OG</option></select></div></div>
-      <label>Google-Maps-Standort</label><input id="mapsUrl" placeholder="Google-Maps-Link (optional)">
-      <div class="small-note">Ohne Link wird Google Maps aus Adresse und Standort geöffnet.</div>
-      <label>Automatenfotos</label><label class="file-label" onclick="document.getElementById('machinePhotos').click()">📷 Fotos aufnehmen oder aus Galerie auswählen</label><input id="machinePhotos" type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoInput(this,'machinePhotoPreview','machinePhotoState')"><div id="machinePhotoPreview" class="photo-preview"></div>
+      <label>Position des Automaten</label>
+      <div class="row"><button type="button" class="btn secondary" onclick="saveCurrentGps()">📍 Aktuellen Standort speichern</button><button type="button" class="btn secondary" onclick="openMapPicker()">🗺️ Auf Karte markieren</button></div>
+      <div class="row" style="margin-top:8px"><div><label>Breitengrad</label><input id="latitude" inputmode="decimal" placeholder="z. B. 49.12345"></div><div><label>Längengrad</label><input id="longitude" inputmode="decimal" placeholder="z. B. 9.12345"></div></div>
+      <div class="small-note">GPS-Position oder Kartenmarkierung wird beim Automaten gespeichert. Der Navigationslink führt später genau dorthin.</div>
+      <label>Automatenfotos</label><label class="file-label" onclick="document.getElementById('machinePhotos').click()">📷 Fotos aufnehmen oder aus Fotomediathek auswählen</label><input id="machinePhotos" type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(this,'machinePhotoPreview','machinePhotoState')"><div id="machinePhotoPreview" class="photo-preview"></div>
       <label>Seriennummer</label><input id="serial" placeholder="Seriennummer">
       <label>Bemerkung</label><textarea id="notes" placeholder="Zusätzliche Informationen …"></textarea>
       <button class="btn primary" style="margin-top:14px">💾 Automat speichern</button>
@@ -159,6 +162,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <div class="small-note" style="margin-top:10px">Beim PDF öffnet sich direkt die iPhone-Teilen-Funktion. Dort kannst du „In Dateien sichern“, Mail, WhatsApp usw. auswählen.</div>
   </div>
 </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const KEY='automatenverwaltung_v1';
@@ -171,14 +175,22 @@ function fileToCompressedData(file,maxSide=1000,quality=0.58){
 async function handlePhotoInput(input,previewId,stateName){
  const row=input.closest('.service-row');const preview=previewId?document.getElementById(previewId):row?.querySelector('.service-photo-preview');
  const target=stateName==='machinePhotoState'?machinePhotoState:(row?.dataset.photos?JSON.parse(row.dataset.photos):[]);
- try{for(const f of [...input.files||[]]){if(target.length>=5){alert('Maximal 5 Fotos pro Eintrag.');break;}if(f.type.startsWith('image/'))target.push(await fileToCompressedData(f));}}
+ try{for(const f of [...(input.files||[])]){if(target.length>=5){alert('Maximal 5 Fotos pro Eintrag.');break;}if(f.type.startsWith('image/'))target.push(await fileToCompressedData(f));}}
  catch(e){alert('Ein Foto konnte nicht geladen werden.');}
  if(stateName==='machinePhotoState')machinePhotoState=target;else if(row){row.dataset.photos=JSON.stringify(target);saveServiceDraft();}
- renderPhotoPreview(preview,target);input.value='';
+ renderPhotoPreview(preview,target,stateName==='machinePhotoState'?'removeMachinePhoto':null,row);input.value='';
 }
-function renderPhotoPreview(el,photos){if(el)el.innerHTML=(photos||[]).map(src=>`<img src="${src}" alt="Foto">`).join('');}
-function mapsLink(m){return (m.mapsUrl||'').trim()||('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([m.address,m.location].filter(Boolean).join(', ')));}
+function renderPhotoPreview(el,photos,removeFn=null,row=null){if(!el)return;el.innerHTML=(photos||[]).map((src,i)=>`<div class="photo-item"><img src="${src}" alt="Foto"><button type="button" class="photo-remove" aria-label="Foto löschen" onclick="${removeFn?`${removeFn}(${i})`:`removeServicePhoto(this,${i})`}">×</button></div>`).join('');}
+function removeMachinePhoto(i){machinePhotoState.splice(i,1);renderPhotoPreview(document.getElementById('machinePhotoPreview'),machinePhotoState,'removeMachinePhoto');}
+function removeServicePhoto(btn,i){const row=btn.closest('.service-row');if(!row)return;const photos=JSON.parse(row.dataset.photos||'[]');photos.splice(i,1);row.dataset.photos=JSON.stringify(photos);renderPhotoPreview(row.querySelector('.service-photo-preview'),photos,null,row);saveServiceDraft();}
+function mapsLink(m){if(Number.isFinite(Number(m.latitude))&&Number.isFinite(Number(m.longitude))&&m.latitude!==''&&m.longitude!=='')return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(m.latitude+','+m.longitude);return (m.mapsUrl||'').trim()||('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([m.address,m.location].filter(Boolean).join(', ')));}
 function openMachineMap(id){const m=machines.find(x=>x.id===id);if(m)window.open(mapsLink(m),'_blank');}
+function saveCurrentGps(){if(!navigator.geolocation){alert('GPS wird von diesem Gerät nicht unterstützt.');return;}navigator.geolocation.getCurrentPosition(pos=>{document.getElementById('latitude').value=pos.coords.latitude.toFixed(6);document.getElementById('longitude').value=pos.coords.longitude.toFixed(6);alert('Aktuelle GPS-Position übernommen.');},e=>alert('Standort konnte nicht ermittelt werden. Bitte Standortfreigabe erlauben.'),{enableHighAccuracy:true,timeout:15000,maximumAge:0});}
+let pickerMap=null,pickerMarker=null,pendingMapPosition=null;
+function openMapPicker(){document.getElementById('mapPickerModal').classList.add('open');setTimeout(()=>{if(!window.L){alert('Die Kartenbibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen.');return;}if(!pickerMap){const lat=parseFloat(document.getElementById('latitude').value)||49.080;const lng=parseFloat(document.getElementById('longitude').value)||9.980;pickerMap=L.map('machineMapPicker').setView([lat,lng],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pickerMap);pickerMap.on('click',e=>setPickerMarker(e.latlng.lat,e.latlng.lng));}pickerMap.invalidateSize();const lat=parseFloat(document.getElementById('latitude').value),lng=parseFloat(document.getElementById('longitude').value);if(Number.isFinite(lat)&&Number.isFinite(lng)){pickerMap.setView([lat,lng],16);setPickerMarker(lat,lng);}},250);}
+function setPickerMarker(lat,lng){pendingMapPosition={lat,lng};if(!pickerMarker)pickerMarker=L.marker([lat,lng],{draggable:true}).addTo(pickerMap);else pickerMarker.setLatLng([lat,lng]);pickerMarker.off('dragend').on('dragend',e=>{const p=e.target.getLatLng();pendingMapPosition={lat:p.lat,lng:p.lng};});}
+function confirmMapPosition(){if(!pendingMapPosition){alert('Bitte zuerst eine Position auf der Karte antippen.');return;}document.getElementById('latitude').value=pendingMapPosition.lat.toFixed(6);document.getElementById('longitude').value=pendingMapPosition.lng.toFixed(6);closeMapPicker();}
+function closeMapPicker(){document.getElementById('mapPickerModal').classList.remove('open');}
 
 
 const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat','Geldaufwerter','Flaschenrücknehmer','Eisautomat'];
@@ -212,7 +224,7 @@ function updateHome(){
 }
 function newMachine(){resetForm();updateSuggestions();showView('form');}
 function resetForm(){
-  document.getElementById('machineForm').reset();machinePhotoState=[];renderPhotoPreview(document.getElementById('machinePhotoPreview'),machinePhotoState);document.getElementById('editId').value='';
+  document.getElementById('machineForm').reset();machinePhotoState=[];renderPhotoPreview(document.getElementById('machinePhotoPreview'),machinePhotoState,'removeMachinePhoto');document.getElementById('latitude').value='';document.getElementById('longitude').value='';document.getElementById('editId').value='';
   document.getElementById('formTitle').textContent='Neuen Automaten einfügen';
 }
 let serviceMachineId='';
@@ -295,12 +307,12 @@ function attachServiceDraftAutosave(){
 function addServiceRow(data={},targetId='serviceRows'){
   const wrap=document.getElementById(targetId);
   const row=document.createElement('div'); row.className='service-row';
-  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="text" inputmode="numeric" maxlength="10" class="service-date" placeholder="TT.MM.JJJJ" value="${esc(formatServiceDate(data.date)||data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="row" style="margin-top:8px"><div><label>Anfahrt / Minuten</label><input type="number" min="0" step="1" class="service-travel-minutes" value="${esc(data.travelMinutes??'')}" placeholder="z. B. 30"></div><div><label>Anfahrt / Kilometer</label><input type="number" min="0" step="0.1" class="service-travel-km" value="${esc(data.travelKm??'')}" placeholder="z. B. 25,5"></div></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><input class="service-error" placeholder="Welcher Fehler wurde festgestellt?" value="${esc(data.errorDescription||'')}"></div><div style="margin-top:8px"><label>Leistung</label><textarea class="service-performance" rows="4" placeholder="z. B. Reinigung, Reparatur, durchgeführte Arbeiten …">${esc(data.performance||'')}</textarea></div><label>Servicefotos</label><label class="file-label" onclick="this.nextElementSibling.click()">📷 Servicefotos hinzufügen</label><input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoInput(this,'','servicePhotoState')"><div class="photo-preview service-photo-preview"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div>`;
+  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="text" inputmode="numeric" maxlength="10" class="service-date" placeholder="TT.MM.JJJJ" value="${esc(formatServiceDate(data.date)||data.date||'')}"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="row" style="margin-top:8px"><div><label>Anfahrt / Minuten</label><input type="number" min="0" step="1" class="service-travel-minutes" value="${esc(data.travelMinutes??'')}" placeholder="z. B. 30"></div><div><label>Anfahrt / Kilometer</label><input type="number" min="0" step="0.1" class="service-travel-km" value="${esc(data.travelKm??'')}" placeholder="z. B. 25,5"></div></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><input class="service-error" placeholder="Welcher Fehler wurde festgestellt?" value="${esc(data.errorDescription||'')}"></div><div style="margin-top:8px"><label>Leistung</label><textarea class="service-performance" rows="4" placeholder="z. B. Reinigung, Reparatur, durchgeführte Arbeiten …">${esc(data.performance||'')}</textarea></div><label>Servicefotos</label><label class="file-label" onclick="this.nextElementSibling.click()">📷 Servicefotos aufnehmen oder aus Galerie auswählen</label><input type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(this,'','servicePhotoState')"><div class="photo-preview service-photo-preview"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div>`;
   const from=row.querySelector('.service-from'), to=row.querySelector('.service-to'), duration=row.querySelector('.service-duration');
   function calcDuration(){ if(!from.value||!to.value){duration.value='';return;} let [fh,fm]=from.value.split(':').map(Number),[th,tm]=to.value.split(':').map(Number); let mins=(th*60+tm)-(fh*60+fm); if(mins<0) mins+=24*60; duration.value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.'; }
   from.addEventListener('input',calcDuration); to.addEventListener('input',calcDuration); calcDuration();
   row.dataset.technician=data.technician||''; row.dataset.printedName=data.printedName||''; row.dataset.customerEmail=data.customerEmail||''; row.dataset.signature=data.signature||''; row.dataset.photos=JSON.stringify(data.photos||[]);
-  wrap.appendChild(row);renderPhotoPreview(row.querySelector('.service-photo-preview'),data.photos||[]);
+  wrap.appendChild(row);renderPhotoPreview(row.querySelector('.service-photo-preview'),data.photos||[],null,row);
   setPortionVisibility(row, targetId==='newServiceRows' ? serviceEntryType : document.getElementById('type').value);
   (data.parts||[]).forEach(part=>addPartRow(row.querySelector('.parts-box'),part));
   if(targetId==='newServiceRows' && serviceEditIndex===null) attachServiceDraftAutosave();
@@ -345,7 +357,7 @@ function saveMachine(e){
   if(duplicate){alert('Diese Automatennummer ist bereits vorhanden.');return;}
   const now=new Date().toISOString();
   const existing=editId?machines.find(m=>m.id===editId):null;
-  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),address:val('address'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),mapsUrl:val('mapsUrl'),photos:machinePhotoState.length?machinePhotoState:(existing?.photos||[]),services:existing?.services||[],updatedAt:now};
+  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),address:val('address'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),mapsUrl:val('mapsUrl'),latitude:val('latitude'),longitude:val('longitude'),photos:machinePhotoState,services:existing?.services||[],updatedAt:now};
   if(editId){const i=machines.findIndex(m=>m.id===editId);machines[i]=obj}else machines.unshift(obj);
   persist();showDetail(obj.id);
 }
@@ -409,7 +421,7 @@ function showDetail(id){
  <div style="font-size:36px">${icons[m.type]||'⚙️'}</div><h2 style="margin:6px 0">${esc(m.number)}</h2><p class="sub">${esc(m.type)}${m.name?' · '+esc(m.name):''}</p>
  <div class="section-title" style="margin-top:20px">Standort</div>
  <div class="detail-grid">
- ${detail('Firma',m.company)}${detail('Standort',m.location)}${detail('Adresse',m.address)}${detail('Station',m.station)}${detail('Stock',m.floor)}
+ ${detail('Firma',m.company)}${detail('Standort',m.location)}${detail('Adresse',m.address)}${detail('Station',m.station)}${detail('Stock',m.floor)}${detail('GPS-Breitengrad',m.latitude)}${detail('GPS-Längengrad',m.longitude)}
  </div>
  ${m.photos?.length?`<div class="section-title" style="margin-top:16px">Automatenfotos</div><div class="photo-grid">${m.photos.map(src=>`<img class="photo-thumb" src="${src}" alt="Automatenfoto" onclick="window.open(this.src,'_blank')">`).join('')}</div>`:''}
  <button class="btn secondary" style="margin-top:10px" onclick="openMachineMap('${m.id}')">📍 Standort in Google Maps öffnen</button>
@@ -423,8 +435,8 @@ function showDetail(id){
 function detail(k,v){return `<div class="detail"><small>${k}</small><b>${esc(v||'—')}</b></div>`}
 function editMachine(id){
  const m=machines.find(x=>x.id===id);if(!m)return;
- ['number','type','name','company','location','address','station','floor','serial','notes','mapsUrl'].forEach(k=>document.getElementById(k).value=m[k]||'');
- machinePhotoState=m.photos||[];renderPhotoPreview(document.getElementById('machinePhotoPreview'),machinePhotoState);
+ ['number','type','name','company','location','address','station','floor','serial','notes'].forEach(k=>document.getElementById(k).value=m[k]||'');
+ document.getElementById('latitude').value=m.latitude||'';document.getElementById('longitude').value=m.longitude||'';machinePhotoState=m.photos||[];renderPhotoPreview(document.getElementById('machinePhotoPreview'),machinePhotoState,'removeMachinePhoto');
  document.getElementById('editId').value=id;document.getElementById('formTitle').textContent='Automat bearbeiten';showView('form');
 }
 function newService(machineId){

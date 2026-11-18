@@ -1,33 +1,17 @@
-AUTOMATENVERWALTUNG – iPhone PWA
+AUTOMATENVERWALTUNG – iPhone PWA v18
 
-Funktionen:
-- Startseite
-- Automat einfügen
-- Suche nach Nummer, Firma, Standort, Name, Seriennummer, Station
-- Filter nach Automatentyp
-- Detailansicht
-- Bearbeiten / Löschen
-- Schutz gegen doppelte Automatennummern
-- lokale Speicherung auf dem Gerät
-- JSON-Export und Import
-- Offline-PWA nach einmaligem Laden
-- Serviceeinsatz entweder manuell erfassen oder mit „Serviceeinsatz starten“ und „Einsatz fertig“ automatisch mit Datum/Uhrzeit erfassen
-- Laufender Serviceeinsatz wird als Entwurf auf dem Gerät gespeichert und kann fortgesetzt werden
+Enthaltene Funktionen (bestehende Funktionen aus v17 bleiben erhalten):
+- Automatenfotos: Auswahl aus Fotomediathek oder Aufnahme mit Kamera; bis zu 5 Fotos pro Automat; einzelne Fotos vor dem Speichern löschbar.
+- Servicefotos: Auswahl aus Fotomediathek oder Aufnahme mit Kamera; bis zu 5 Fotos je Serviceeinsatz; einzelne Fotos löschbar.
+- Automatenposition: aktuelle GPS-Position speichern oder Position auf einer interaktiven Karte markieren/verschieben.
+- Navigation: Google Maps wird mit den gespeicherten Koordinaten als Ziel geöffnet.
+- Stationsfeld bleibt mehrzeilig und vergrößert.
+- Service-Datum im Format TT.MM.JJJJ.
+- Filter nach Firma und Standort.
 
-WICHTIG:
-Diese Version speichert die Daten lokal auf dem jeweiligen Gerät. Für gemeinsame Nutzung durch mehrere Mitarbeiter bzw. mehrere iPhones braucht die App noch eine zentrale Cloud-Datenbank und Benutzeranmeldung.
-
-iPhone:
-Die App muss über HTTPS auf einer Website erreichbar sein. Dann in Safari öffnen -> Teilen -> Zum Home-Bildschirm.
-
-Änderung in Version 14: Serviceeinsatz kann manuell oder per Start/Stopp-Zeitmessung erfasst werden.
-
-Änderung in Version 3: „Geldaufwerter“ ist jetzt als Automatentyp auswählbar.
-
-
-Version 16 Änderungen:
-- Neue Automatentypen: Flaschenrücknehmer und Eisautomat.
-- Serviceformular: Fehlerbeschreibung ist jetzt ein einzeiliges Feld; Leistung ist ein größeres mehrzeiliges Textfeld.
-
-
-Version 17: Stationsfeld vergrößert, Automaten- und Servicefotos, Google-Maps-Standort, deutsches Service-Datumsformat TT.MM.JJJJ, Firmen- und Standortfilter.
+Hinweise:
+- Für GPS muss die App über HTTPS geöffnet sein und die Standortfreigabe im iPhone erlaubt werden.
+- Die Kartenansicht verwendet Leaflet und OpenStreetMap-Kartenkacheln und benötigt Internet.
+- Die App speichert lokal auf dem jeweiligen Gerät. Vor dem Austausch der Dateien bitte in der App eine JSON-Sicherung exportieren.
+- Beim Update dieselbe Webadresse verwenden und lokale Website-Daten nicht löschen. Die Datenstruktur wurde erweitert; bestehende Automatendaten bleiben kompatibel.
+- iPhone: Safari -> Teilen -> Zum Home-Bildschirm.
