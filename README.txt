@@ -1,6 +1,6 @@
-AUTOMATENVERWALTUNG – iPhone PWA v18
+AUTOMATENVERWALTUNG – iPhone PWA v22
 
-Enthaltene Funktionen (bestehende Funktionen aus v17 bleiben erhalten):
+Enthaltene Funktionen (bestehende Funktionen aus v22 bleiben erhalten):
 - Automatenfotos: Auswahl aus Fotomediathek oder Aufnahme mit Kamera; bis zu 5 Fotos pro Automat; einzelne Fotos vor dem Speichern löschbar.
 - Servicefotos: Auswahl aus Fotomediathek oder Aufnahme mit Kamera; bis zu 5 Fotos je Serviceeinsatz; einzelne Fotos löschbar.
 - Automatenposition: aktuelle GPS-Position speichern oder Position auf einer interaktiven Karte markieren/verschieben.
