@@ -15,3 +15,5 @@ Hinweise:
 - Die App speichert lokal auf dem jeweiligen Gerät. Vor dem Austausch der Dateien bitte in der App eine JSON-Sicherung exportieren.
 - Beim Update dieselbe Webadresse verwenden und lokale Website-Daten nicht löschen. Die Datenstruktur wurde erweitert; bestehende Automatendaten bleiben kompatibel.
 - iPhone: Safari -> Teilen -> Zum Home-Bildschirm.
+
+Version 19: Foto-Miniaturen lassen sich in der App in einer Großansicht öffnen und schließen.
