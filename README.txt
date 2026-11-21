@@ -16,6 +16,6 @@ Hinweise:
 - Beim Update dieselbe Webadresse verwenden und lokale Website-Daten nicht löschen. Die Datenstruktur wurde erweitert; bestehende Automatendaten bleiben kompatibel.
 - iPhone: Safari -> Teilen -> Zum Home-Bildschirm.
 
-Version 20: Foto-Miniaturen lassen sich in der App in einer Großansicht öffnen und schließen.
+Version 21: Foto-Miniaturen lassen sich in der App in einer Großansicht öffnen und schließen.
 
-Version 20: Fehlendes Kartenfenster ergänzt. Kartenposition per Tippen setzen, Marker verschieben und Koordinaten übernehmen.
+Version 21: Fehlendes Kartenfenster ergänzt. Kartenposition per Tippen setzen, Marker verschieben und Koordinaten übernehmen.

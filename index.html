@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Automaten">
 <link rel="manifest" href="manifest.json">
-<title>Automatenverwaltung v20</title>
+<title>Automatenverwaltung v21</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#0b6bcb;--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#66717d;--line:#e2e7ec;--danger:#c62828;--green:#178a4b}
@@ -96,7 +96,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
       <label>Adresse</label><input id="address" list="suggestAddress" autocomplete="off" placeholder="z. B. Hauptstrasse 1">
       <div class="row"><div><label>Station</label><textarea id="station" class="station-input" list="suggestStation" autocomplete="off" placeholder="Ausführliche Stationsangabe …"></textarea></div><div><label>Stock</label><select id="floor"><option value="">Bitte auswählen</option><option>UG</option><option>EG</option><option>1OG</option><option>2OG</option><option>3OG</option><option>4OG</option><option>5OG</option></select></div></div>
       <label>Position des Automaten</label>
-      <div class="row"><button type="button" class="btn secondary" onclick="saveCurrentGps()">📍 Aktuellen Standort speichern</button><button type="button" class="btn secondary" onclick="openMapPicker()">🗺️ Auf Karte markieren</button></div>
+      <div class="row"><button type="button" class="btn secondary" onclick="saveCurrentGps()">📍 Aktuellen Standort speichern</button><button type="button" class="btn secondary" id="openMapPickerBtn">🗺️ Auf Karte markieren</button></div>
       <div class="row" style="margin-top:8px"><div><label>Breitengrad</label><input id="latitude" inputmode="decimal" placeholder="z. B. 49.12345"></div><div><label>Längengrad</label><input id="longitude" inputmode="decimal" placeholder="z. B. 9.12345"></div></div>
       <div class="small-note">GPS-Position oder Kartenmarkierung wird beim Automaten gespeichert. Der Navigationslink führt später genau dorthin.</div>
       <label>Automatenfotos</label><label class="file-label" onclick="document.getElementById('machinePhotos').click()">📷 Fotos aufnehmen oder aus Fotomediathek auswählen</label><input id="machinePhotos" type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(this,'machinePhotoPreview','machinePhotoState')"><div id="machinePhotoPreview" class="photo-preview"></div>
@@ -194,10 +194,45 @@ function mapsLink(m){if(Number.isFinite(Number(m.latitude))&&Number.isFinite(Num
 function openMachineMap(id){const m=machines.find(x=>x.id===id);if(m)window.open(mapsLink(m),'_blank');}
 function saveCurrentGps(){if(!navigator.geolocation){alert('GPS wird von diesem Gerät nicht unterstützt.');return;}navigator.geolocation.getCurrentPosition(pos=>{document.getElementById('latitude').value=pos.coords.latitude.toFixed(6);document.getElementById('longitude').value=pos.coords.longitude.toFixed(6);alert('Aktuelle GPS-Position übernommen.');},e=>alert('Standort konnte nicht ermittelt werden. Bitte Standortfreigabe erlauben.'),{enableHighAccuracy:true,timeout:15000,maximumAge:0});}
 let pickerMap=null,pickerMarker=null,pendingMapPosition=null;
-function openMapPicker(){document.getElementById('mapPickerModal').classList.add('open');setTimeout(()=>{if(!window.L){alert('Die Kartenbibliothek konnte nicht geladen werden. Bitte Internetverbindung prüfen.');return;}if(!pickerMap){const lat=parseFloat(document.getElementById('latitude').value)||49.080;const lng=parseFloat(document.getElementById('longitude').value)||9.980;pickerMap=L.map('machineMapPicker').setView([lat,lng],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pickerMap);pickerMap.on('click',e=>setPickerMarker(e.latlng.lat,e.latlng.lng));}pickerMap.invalidateSize();const lat=parseFloat(document.getElementById('latitude').value),lng=parseFloat(document.getElementById('longitude').value);if(Number.isFinite(lat)&&Number.isFinite(lng)){pickerMap.setView([lat,lng],16);setPickerMarker(lat,lng);}},250);}
+function mapPickerMessage(message){
+  const status=document.getElementById('mapPickerStatus');
+  if(status){status.textContent=message;status.style.display='block';}
+}
+function openMapPicker(){
+  const modal=document.getElementById('mapPickerModal');
+  if(!modal){alert('Das Kartenfenster wurde in der App nicht gefunden. Bitte Version 21 vollständig hochladen.');return;}
+  modal.classList.add('open');
+  document.body.style.overflow='hidden';
+  const status=document.getElementById('mapPickerStatus');
+  if(status){status.textContent='';status.style.display='none';}
+  setTimeout(()=>{
+    try{
+      if(!window.L){
+        mapPickerMessage('Die Kartenbibliothek ist nicht erreichbar. Bitte Internetverbindung prüfen und die Seite neu laden. Die GPS-Koordinatenfunktion bleibt weiterhin verfügbar.');
+        return;
+      }
+      const mapElement=document.getElementById('machineMapPicker');
+      if(!mapElement){mapPickerMessage('Das Kartenfeld wurde nicht gefunden.');return;}
+      if(!pickerMap){
+        const lat=parseFloat(document.getElementById('latitude').value)||49.080;
+        const lng=parseFloat(document.getElementById('longitude').value)||9.980;
+        pickerMap=window.L.map(mapElement).setView([lat,lng],13);
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(pickerMap);
+        pickerMap.on('click',e=>setPickerMarker(e.latlng.lat,e.latlng.lng));
+      }
+      pickerMap.invalidateSize();
+      const lat=parseFloat(document.getElementById('latitude').value);
+      const lng=parseFloat(document.getElementById('longitude').value);
+      if(Number.isFinite(lat)&&Number.isFinite(lng)){pickerMap.setView([lat,lng],16);setPickerMarker(lat,lng);}
+      mapPickerMessage('Tippe auf die Karte, um den Standort zu markieren. Du kannst die Markierung verschieben.');
+    }catch(error){
+      mapPickerMessage('Die Karte konnte nicht gestartet werden: '+(error&&error.message?error.message:'Unbekannter Fehler'));
+    }
+  },300);
+}
 function setPickerMarker(lat,lng){pendingMapPosition={lat,lng};if(!pickerMarker)pickerMarker=L.marker([lat,lng],{draggable:true}).addTo(pickerMap);else pickerMarker.setLatLng([lat,lng]);pickerMarker.off('dragend').on('dragend',e=>{const p=e.target.getLatLng();pendingMapPosition={lat:p.lat,lng:p.lng};});}
 function confirmMapPosition(){if(!pendingMapPosition){alert('Bitte zuerst eine Position auf der Karte antippen.');return;}document.getElementById('latitude').value=pendingMapPosition.lat.toFixed(6);document.getElementById('longitude').value=pendingMapPosition.lng.toFixed(6);closeMapPicker();}
-function closeMapPicker(){document.getElementById('mapPickerModal').classList.remove('open');}
+function closeMapPicker(){const modal=document.getElementById('mapPickerModal');if(modal)modal.classList.remove('open');document.body.style.overflow='';}
 
 
 const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat','Geldaufwerter','Flaschenrücknehmer','Eisautomat'];
@@ -703,6 +738,20 @@ function updateDataInfo(){document.getElementById('dataInfo').textContent=`${mac
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 updateHome();
 updateSuggestions();
+
+// Explizite Ereignisbindung für den Kartenbutton (robuster auf iOS/Safari)
+document.addEventListener('DOMContentLoaded',()=>{
+  const mapButton=document.getElementById('openMapPickerBtn');
+  if(mapButton){
+    mapButton.addEventListener('click',event=>{
+      event.preventDefault();
+      event.stopPropagation();
+      try{openMapPicker();}
+      catch(error){alert('Fehler beim Öffnen der Karte: '+(error&&error.message?error.message:'Unbekannter Fehler'));}
+    });
+  }
+});
+
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 
@@ -712,6 +761,7 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch
   <div class="modal-card">
     <h2 style="margin:0 0 8px">🗺️ Automatenstandort markieren</h2>
     <p class="small-note" style="margin:0 0 12px">Tippe auf die Karte, um den Standort zu setzen. Du kannst die Markierung anschließend verschieben.</p>
+    <div id="mapPickerStatus" class="small-note" role="status" style="display:none;padding:10px;background:#fff8df;border-radius:10px;margin:8px 0"></div>
     <div id="machineMapPicker" aria-label="Karte zur Standortauswahl"></div>
     <div class="map-picker-actions">
       <button type="button" class="btn secondary" onclick="closeMapPicker()">Abbrechen</button>
