@@ -71,7 +71,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <input id="listSearch" placeholder="Liste durchsuchen…" oninput="renderList()">
     <div class="toolbar" id="filterBar"></div>
     <div class="filter-selects">
-      <div><label>Firma filtern</label><select id="companyFilter" onchange="renderList()"><option value="">Alle Firmen</option></select></div>
+      <div><label>Firma suchen</label><input id="companyFilter" list="companyFilterSuggestions" autocomplete="off" placeholder="Erste Buchstaben eingeben …" oninput="renderList()"><datalist id="companyFilterSuggestions"></datalist></div>
       <div><label>Standort filtern</label><select id="locationFilter" onchange="renderList()"><option value="">Alle Standorte</option></select></div>
     </div>
   </div>
@@ -457,11 +457,12 @@ function renderList(){
  const q=(document.getElementById('listSearch').value||'').toLowerCase();
  document.getElementById('filterBar').innerHTML=types.map(t=>`<button class="chip ${currentFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('');
  const cf=document.getElementById('companyFilter'),lf=document.getElementById('locationFilter');
- const oldC=cf.value,oldL=lf.value;
- cf.innerHTML='<option value="">Alle Firmen</option>'+uniqueValues('company').map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+ const companyPrefix=(cf.value||'').trim().toLocaleLowerCase('de-DE');
+ const oldL=lf.value;
+ document.getElementById('companyFilterSuggestions').innerHTML=uniqueValues('company').map(v=>`<option value="${esc(v)}"></option>`).join('');
  lf.innerHTML='<option value="">Alle Standorte</option>'+uniqueValues('location').map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
- cf.value=oldC;lf.value=oldL;
- let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter)&&(!cf.value||m.company===cf.value)&&(!lf.value||m.location===lf.value));
+ lf.value=oldL;
+ let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter)&&(!companyPrefix||(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(companyPrefix))&&(!lf.value||m.location===lf.value));
  if(q)arr=arr.filter(m=>[m.number,m.company,m.location,m.address,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
  // Standardreihenfolge: neuester Serviceeinsatz zuerst.
  // Automaten ohne Serviceeinsatz stehen am Ende. Bei gleichem Datum
