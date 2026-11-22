@@ -261,7 +261,7 @@ function closeMapPicker(){const modal=document.getElementById('mapPickerModal');
 
 
 const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat','Geldaufwerter','Flaschenrücknehmer','Eisautomat'];
-const icons={'Kaffeeautomat':'☕','Snackautomat':'🍫','Wasserspender':'💧','KG Automat':'🥤','Foodautomat':'🍽️','Geldaufwerter':'💶','Flaschenrücknehmer':'♻️','Eisautomat':'🧊'};
+const icons={'Kaffeeautomat':'☕','Snackautomat':'🍫','Wasserspender':'💧','KG Automat':'<svg aria-label="Coca-Cola-Flasche" role="img" width="22" height="30" viewBox="0 0 22 30" style="vertical-align:-6px"><path d="M8 1h6v4c0 2 2 3 3 5l2 4v11c0 2-2 4-4 4H7c-2 0-4-2-4-4V14l2-4c1-2 3-3 3-5z" fill="#e3262e" stroke="#a9151d" stroke-width="1"/><path d="M5 16c4-2 8 2 12 0v5c-4 2-8-2-12 0z" fill="#fff"/><path d="M6 18c3-1 7 1 10 0" fill="none" stroke="#e3262e" stroke-width="1"/></svg>','Foodautomat':'🥪','Geldaufwerter':'💶','Flaschenrücknehmer':'♻️','Eisautomat':'🧊'};
 
 function persist(){localStorage.setItem(KEY,JSON.stringify(machines));updateHome();updateSuggestions();}
 function uniqueValues(field){
