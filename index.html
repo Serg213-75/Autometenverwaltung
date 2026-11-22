@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Automaten">
 <link rel="manifest" href="manifest.json">
-<title>Automatenverwaltung v21</title>
+<title>Automatenverwaltung v23</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#0b6bcb;--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#66717d;--line:#e2e7ec;--danger:#c62828;--green:#178a4b}
@@ -424,7 +424,7 @@ function saveMachine(e){
   if(duplicate){alert('Diese Automatennummer ist bereits vorhanden.');return;}
   const now=new Date().toISOString();
   const existing=editId?machines.find(m=>m.id===editId):null;
-  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),address:val('address'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),mapsUrl:val('mapsUrl'),latitude:val('latitude'),longitude:val('longitude'),photos:machinePhotoState,services:existing?.services||[],updatedAt:now};
+  const obj={id:editId||crypto.randomUUID(),number,type:val('type'),name:val('name'),company:val('company'),location:val('location'),address:val('address'),station:val('station'),floor:val('floor'),serial:val('serial'),notes:val('notes'),mapsUrl:existing?.mapsUrl||'',latitude:val('latitude'),longitude:val('longitude'),photos:machinePhotoState,services:existing?.services||[],updatedAt:now};
   if(editId){const i=machines.findIndex(m=>m.id===editId);machines[i]=obj}else machines.unshift(obj);
   persist();showDetail(obj.id);
 }
