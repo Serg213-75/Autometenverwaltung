@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Automaten">
 <link rel="manifest" href="manifest.json">
-<title>Automatenverwaltung v26</title>
+<title>Automatenverwaltung v27</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#0b6bcb;--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#66717d;--line:#e2e7ec;--danger:#c62828;--green:#178a4b}
@@ -272,7 +272,52 @@ function closeMapPicker(){const modal=document.getElementById('mapPickerModal');
 const types=['Alle','Kaffeeautomat','Snackautomat','Wasserspender','KG Automat','Foodautomat','Geldaufwerter','Flaschenrücknehmer','Eisautomat'];
 const icons={'Kaffeeautomat':'☕','Snackautomat':'🍫','Wasserspender':'💧','KG Automat':'<svg aria-label="Coca-Cola-Flasche" role="img" width="22" height="30" viewBox="0 0 22 30" style="vertical-align:-6px"><path d="M8 1h6v4c0 2 2 3 3 5l2 4v11c0 2-2 4-4 4H7c-2 0-4-2-4-4V14l2-4c1-2 3-3 3-5z" fill="#e3262e" stroke="#a9151d" stroke-width="1"/><path d="M5 16c4-2 8 2 12 0v5c-4 2-8-2-12 0z" fill="#fff"/><path d="M6 18c3-1 7 1 10 0" fill="none" stroke="#e3262e" stroke-width="1"/></svg>','Foodautomat':'🥪','Geldaufwerter':'💶','Flaschenrücknehmer':'♻️','Eisautomat':'🧊'};
 
-function persist(){localStorage.setItem(KEY,JSON.stringify(machines));updateHome();updateSuggestions();}
+const AUTO_BACKUP_DB='automatenverwaltung_auto_backup';
+function openAutoBackupDb(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)){reject(new Error('IndexedDB nicht verfügbar'));return;}
+  const req=indexedDB.open(AUTO_BACKUP_DB,1);
+  req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('snapshots'))db.createObjectStore('snapshots');};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error||new Error('Datenbank konnte nicht geöffnet werden'));
+ });
+}
+async function writeAutoBackup(){
+ let db;
+ try{
+  db=await openAutoBackupDb();
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction('snapshots','readwrite');
+   tx.objectStore('snapshots').put({machines:JSON.parse(JSON.stringify(machines)),savedAt:new Date().toISOString()},'latest');
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Sicherung abgebrochen'));
+  });
+ }catch(error){console.warn('Automatische Datensicherung fehlgeschlagen:',error);}
+ finally{if(db)db.close();}
+}
+async function restoreAutoBackupIfNeeded(){
+ if(machines.length)return false;
+ let db;
+ try{
+  db=await openAutoBackupDb();
+  const snapshot=await new Promise((resolve,reject)=>{
+   const tx=db.transaction('snapshots','readonly');
+   const req=tx.objectStore('snapshots').get('latest');
+   req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);
+  });
+  if(snapshot&&Array.isArray(snapshot.machines)&&snapshot.machines.length){
+   machines=snapshot.machines;
+   localStorage.setItem(KEY,JSON.stringify(machines));
+   return true;
+  }
+ }catch(error){console.warn('Automatische Wiederherstellung nicht möglich:',error);}
+ finally{if(db)db.close();}
+ return false;
+}
+function persist(){
+ localStorage.setItem(KEY,JSON.stringify(machines));
+ writeAutoBackup();
+ updateHome();updateSuggestions();
+}
 function uniqueValues(field){
   return [...new Set(machines.map(m=>(m[field]||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de-DE',{sensitivity:'base',numeric:true}));
 }
@@ -776,10 +821,9 @@ function importData(e){
  const map=new Map(machines.map(m=>[m.id,m]));incoming.forEach(m=>{if(m.id)map.set(m.id,m)});machines=[...map.values()];persist();alert(`${incoming.length} Datensätze importiert/aktualisiert.`);showView('home')}catch{alert('Die Datei konnte nicht gelesen werden.')}};r.readAsText(file);e.target.value='';
 }
 function clearAll(){if(confirm('Wirklich ALLE Automaten löschen? Diese Aktion kann nur mit einem Backup rückgängig gemacht werden.')){machines=[];persist();showView('home')}}
-function updateDataInfo(){document.getElementById('dataInfo').textContent=`${machines.length} Automaten lokal auf diesem Gerät gespeichert.`}
+function updateDataInfo(){document.getElementById('dataInfo').textContent=`${machines.length} Automaten lokal auf diesem Gerät gespeichert. Automatische Zusatzsicherung auf diesem Gerät ist aktiv.`}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-updateHome();
-updateSuggestions();
+restoreAutoBackupIfNeeded().then(restored=>{updateHome();updateSuggestions();if(restored)console.info('Automatische Datensicherung wurde wiederhergestellt.');});
 
 // Explizite Ereignisbindung für den Kartenbutton (robuster auf iOS/Safari)
 document.addEventListener('DOMContentLoaded',()=>{
