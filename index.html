@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Automaten">
 <link rel="manifest" href="manifest.json">
-<title>Automatenverwaltung v25</title>
+<title>Automatenverwaltung v26</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--blue:#0b6bcb;--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#66717d;--line:#e2e7ec;--danger:#c62828;--green:#178a4b}
@@ -355,7 +355,7 @@ function startServiceTimer(){
   const r=currentServiceRow(); if(!r)return;
   if(serviceTimerStarted)return;
   const now=localDateTimeParts();
-  r.querySelector('.service-date').value=now.date.split('-').reverse().join('.');
+  r.querySelector('.service-date').value=now.date;
   r.querySelector('.service-from').value=now.time;
   r.querySelector('.service-to').value='';
   r.querySelector('.service-duration').value='';
@@ -380,18 +380,10 @@ function attachServiceDraftAutosave(){
   const wrap=document.getElementById('newServiceRows'); if(!wrap)return;
   wrap.querySelectorAll('input,textarea,select').forEach(el=>el.addEventListener('input',saveServiceDraft));
 }
-function setServiceToday(button){
-  const field=button?.parentElement?.querySelector('.service-date');
-  if(!field)return;
-  const now=localDateTimeParts();
-  field.value=now.date.split('-').reverse().join('.');
-  field.dispatchEvent(new Event('input',{bubbles:true}));
-  if(field.closest('#newServiceRows'))saveServiceDraft();
-}
 function addServiceRow(data={},targetId='serviceRows'){
   const wrap=document.getElementById(targetId);
   const row=document.createElement('div'); row.className='service-row';
-  row.innerHTML=`<div class="row"><div><label>Datum</label><div style="display:flex;gap:5px"><input type="text" inputmode="text" autocapitalize="off" autocomplete="off" maxlength="10" class="service-date" placeholder="TT.MM.JJJJ" value="${esc(formatServiceDate(data.date)||data.date||'')}" style="min-width:0;flex:1"><button type="button" class="btn secondary" style="padding:8px 10px;white-space:nowrap" onclick="setServiceToday(this)">Heute</button></div></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="row" style="margin-top:8px"><div><label>Anfahrt / Minuten</label><input type="number" min="0" step="1" class="service-travel-minutes" value="${esc(data.travelMinutes??'')}" placeholder="z. B. 30"></div><div><label>Anfahrt / Kilometer</label><input type="number" min="0" step="0.1" class="service-travel-km" value="${esc(data.travelKm??'')}" placeholder="z. B. 25,5"></div></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><input class="service-error" placeholder="Welcher Fehler wurde festgestellt?" value="${esc(data.errorDescription||'')}"></div><div style="margin-top:8px"><label>Leistung</label><textarea class="service-performance" rows="4" placeholder="z. B. Reinigung, Reparatur, durchgeführte Arbeiten …">${esc(data.performance||'')}</textarea></div><label>Servicefotos</label><label class="file-label" onclick="this.nextElementSibling.click()">📷 Servicefotos aufnehmen oder aus Galerie auswählen</label><input type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(this,'','servicePhotoState')"><div class="photo-preview service-photo-preview"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div>`;
+  row.innerHTML=`<div class="row"><div><label>Datum</label><input type="date" class="service-date" value="${esc(serviceDateKey(data.date)||localDateTimeParts().date)}" style="min-width:0;width:100%"></div><div><label>Von</label><input type="time" class="service-from" value="${esc(data.from||'')}"></div><div><label>Bis</label><input type="time" class="service-to" value="${esc(data.to||'')}"></div></div><div style="margin-top:8px"><label>Dauer</label><input class="service-duration" readonly value="${esc(data.duration||'')}" placeholder="wird automatisch berechnet"></div><div class="row" style="margin-top:8px"><div><label>Anfahrt / Minuten</label><input type="number" min="0" step="1" class="service-travel-minutes" value="${esc(data.travelMinutes??'')}" placeholder="z. B. 30"></div><div><label>Anfahrt / Kilometer</label><input type="number" min="0" step="0.1" class="service-travel-km" value="${esc(data.travelKm??'')}" placeholder="z. B. 25,5"></div></div><div class="portion-wrap" style="margin-top:8px"><label>Zähler (Anzahl der Portionen)</label><input type="number" min="0" step="1" class="service-portions" value="${esc(data.portions??'')}" placeholder="z. B. 12500"></div><div style="margin-top:8px"><label>Fehlerbeschreibung</label><input class="service-error" placeholder="Welcher Fehler wurde festgestellt?" value="${esc(data.errorDescription||'')}"></div><div style="margin-top:8px"><label>Leistung</label><textarea class="service-performance" rows="4" placeholder="z. B. Reinigung, Reparatur, durchgeführte Arbeiten …">${esc(data.performance||'')}</textarea></div><label>Servicefotos</label><label class="file-label" onclick="this.nextElementSibling.click()">📷 Servicefotos aufnehmen oder aus Galerie auswählen</label><input type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoInput(this,'','servicePhotoState')"><div class="photo-preview service-photo-preview"></div><div class="parts-box"><label style="margin-top:0">Ersatzteile</label><div class="parts-list"></div><button type="button" class="btn secondary" onclick="addPartRow(this.parentElement)">➕ Ersatzteil hinzufügen</button></div>`;
   const from=row.querySelector('.service-from'), to=row.querySelector('.service-to'), duration=row.querySelector('.service-duration');
   function calcDuration(){ if(!from.value||!to.value){duration.value='';return;} let [fh,fm]=from.value.split(':').map(Number),[th,tm]=to.value.split(':').map(Number); let mins=(th*60+tm)-(fh*60+fm); if(mins<0) mins+=24*60; duration.value=Math.floor(mins/60)+' Std. '+(mins%60)+' Min.'; }
   from.addEventListener('input',calcDuration); to.addEventListener('input',calcDuration); calcDuration();
