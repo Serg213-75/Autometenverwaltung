@@ -527,16 +527,7 @@ function showSearchGroup(id,mode){
    heading=source.type+' – Firma: '+source.company;
  }
  arr.sort((a,b)=>(a.number||'').localeCompare(b.number||'','de-DE',{numeric:true,sensitivity:'base'}));
- document.getElementById('searchResults').innerHTML=`<div class="card"><button type="button" class="back" onclick="renderResults()">‹ Zurück zu den Suchergebnissen</button><div class="section-title">${esc(heading)}</div><p class="sub">${arr.length} Automaten gefunden</p></div>`+(arr.length?arr.map(machinefunction onLocationFilterChange(){
- const cf=document.getElementById('companyFilter');
- const lf=document.getElementById('locationFilter');
- const locationPrefix=(lf.value||'').trim().toLocaleLowerCase('de-DE');
- const companyPrefix=(cf.value||'').trim().toLocaleLowerCase('de-DE');
- if(locationPrefix&&companyPrefix){
-   const compatible=machines.some(m=>(m.location||'').trim().toLocaleLowerCase('de-DE').startsWith(locationPrefix)&&(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(companyPrefix));
-   if(!compatible)cf.value='';
- }
- renderList();
+ document.getElementById('searchResults').innerHTML=`<div class="card"><button type="button" class="back" onclick="renderResults()">‹ Zurück zu den Suchergebnissen</button><div class="section-title">${esc(heading)}</div><p class="sub">${arr.length} Automaten gefunden</p></div>`+(arr.length?arr.map(machineCard).join(''):`<div class="empty">Keine Automaten gefunden.</div>`);
 }
 function renderList(){
  const q=(document.getElementById('listSearch').value||'').toLowerCase();
