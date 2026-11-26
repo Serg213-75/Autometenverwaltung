@@ -72,7 +72,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <div class="toolbar" id="filterBar"></div>
     <div class="filter-selects">
       <div><label>Firma suchen</label><input id="companyFilter" list="companyFilterSuggestions" autocomplete="off" placeholder="Erste Buchstaben eingeben …" oninput="renderList()"><datalist id="companyFilterSuggestions"></datalist></div>
-      <div><label>Standort filtern</label><select id="locationFilter" onchange="onLocationFilterChange()"><option value="">Alle Standorte</option></select></div>
+      <div><label>Standort suchen</label><input id="locationFilter" list="locationFilterSuggestions" autocomplete="off" placeholder="Erste Buchstaben eingeben …" oninput="renderList()"><datalist id="locationFilterSuggestions"></datalist></div>
     </div>
   </div>
   <div id="machineList"></div>
@@ -527,14 +527,13 @@ function showSearchGroup(id,mode){
    heading=source.type+' – Firma: '+source.company;
  }
  arr.sort((a,b)=>(a.number||'').localeCompare(b.number||'','de-DE',{numeric:true,sensitivity:'base'}));
- document.getElementById('searchResults').innerHTML=`<div class="card"><button type="button" class="back" onclick="renderResults()">‹ Zurück zu den Suchergebnissen</button><div class="section-title">${esc(heading)}</div><p class="sub">${arr.length} Automaten gefunden</p></div>`+(arr.length?arr.map(machineCard).join(''):'<div class="empty">Keine passenden Automaten gefunden.</div>');
-}
-function onLocationFilterChange(){
+ document.getElementById('searchResults').innerHTML=`<div class="card"><button type="button" class="back" onclick="renderResults()">‹ Zurück zu den Suchergebnissen</button><div class="section-title">${esc(heading)}</div><p class="sub">${arr.length} Automaten gefunden</p></div>`+(arr.length?arr.map(machinefunction onLocationFilterChange(){
  const cf=document.getElementById('companyFilter');
  const lf=document.getElementById('locationFilter');
- const prefix=(cf.value||'').trim().toLocaleLowerCase('de-DE');
- if(lf.value&&prefix){
-   const compatible=machines.some(m=>(m.location||'')===lf.value&&(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(prefix));
+ const locationPrefix=(lf.value||'').trim().toLocaleLowerCase('de-DE');
+ const companyPrefix=(cf.value||'').trim().toLocaleLowerCase('de-DE');
+ if(locationPrefix&&companyPrefix){
+   const compatible=machines.some(m=>(m.location||'').trim().toLocaleLowerCase('de-DE').startsWith(locationPrefix)&&(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(companyPrefix));
    if(!compatible)cf.value='';
  }
  renderList();
@@ -544,18 +543,15 @@ function renderList(){
  document.getElementById('filterBar').innerHTML=types.map(t=>`<button class="chip ${currentFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('');
  const cf=document.getElementById('companyFilter'),lf=document.getElementById('locationFilter');
  const companyPrefix=(cf.value||'').trim().toLocaleLowerCase('de-DE');
- let selectedLocation=lf.value;
- // Standorte hängen von der eingegebenen Firma bzw. dem Firmenpräfix ab.
+ const locationPrefix=(lf.value||'').trim().toLocaleLowerCase('de-DE');
+ // Standortvorschläge werden durch die eingegebene Firma eingeschränkt.
  const companyMatches=machines.filter(m=>!companyPrefix||(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(companyPrefix));
  const allowedLocations=[...new Set(companyMatches.map(m=>(m.location||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de-DE',{sensitivity:'base',numeric:true}));
- if(selectedLocation&&!allowedLocations.includes(selectedLocation))selectedLocation='';
- lf.innerHTML='<option value="">Alle Standorte</option>'+allowedLocations.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
- lf.value=selectedLocation;
- // Firmenvorschläge hängen umgekehrt vom ausgewählten Standort ab.
- const companyMatchesAtLocation=machines.filter(m=>!selectedLocation||(m.location||'').trim()===selectedLocation);
- const allowedCompanies=[...new Set(companyMatchesAtLocation.map(m=>(m.company||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de-DE',{sensitivity:'base',numeric:true}));
+ document.getElementById('locationFilterSuggestions').innerHTML=allowedLocations.map(v=>`<option value="${esc(v)}"></option>`).join('');
+ const locationMatches=machines.filter(m=>!locationPrefix||(m.location||'').trim().toLocaleLowerCase('de-DE').startsWith(locationPrefix));
+ const allowedCompanies=[...new Set(locationMatches.map(m=>(m.company||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de-DE',{sensitivity:'base',numeric:true}));
  document.getElementById('companyFilterSuggestions').innerHTML=allowedCompanies.map(v=>`<option value="${esc(v)}"></option>`).join('');
- let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter)&&(!companyPrefix||(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(companyPrefix))&&(!selectedLocation||(m.location||'').trim()===selectedLocation));
+ let arr=machines.filter(m=>(currentFilter==='Alle'||m.type===currentFilter)&&(!companyPrefix||(m.company||'').trim().toLocaleLowerCase('de-DE').startsWith(companyPrefix))&&(!locationPrefix||(m.location||'').trim().toLocaleLowerCase('de-DE').startsWith(locationPrefix)));
  if(q)arr=arr.filter(m=>[m.number,m.company,m.location,m.address,m.name,m.serial,m.station].some(x=>(x||'').toLowerCase().includes(q)));
  // Standardreihenfolge: neuester Serviceeinsatz zuerst.
  // Automaten ohne Serviceeinsatz stehen am Ende. Bei gleichem Datum
