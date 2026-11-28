@@ -137,7 +137,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <section id="carParts" class="view">
   <button class="back" onclick="showView('home')">‹ Startseite</button>
   <div class="card"><div class="section-title">Ersatzteile fürs Auto</div><p class="sub">Ersatzteile aus unseren Lieferscheinen und manuell eingetragene Teile. Abhaken bedeutet: Das Teil liegt wieder im Auto.</p><button class="btn primary" type="button" onclick="openCarPartForm()">➕ Ersatzteil manuell eintragen</button></div>
-  <div class="card" id="carPartForm" style="display:none"><div class="section-title">Ersatzteil hinzufügen</div><label>Ersatzteilname (optional, wenn Foto vorhanden)</label><input id="carPartName" placeholder="z. B. Pumpe, Magnetventil …"><label>Automat</label><select id="carPartMachine"></select><label>Foto (optional)</label><label class="file-label" onclick="document.getElementById('carPartPhotosInput').click()">📷 Foto aufnehmen oder aus Galerie auswählen</label><input id="carPartPhotosInput" type="file" accept="image/*" multiple style="display:none" onchange="handleCarPartPhotoInput(this)"><div id="carPartPhotoPreview" class="photo-preview"></div><button class="btn primary" type="button" style="margin-top:12px" onclick="saveManualCarPart()">💾 Speichern</button><button class="btn secondary" type="button" style="margin-top:8px" onclick="closeCarPartForm()">Abbrechen</button></div>
+  <div class="card" id="carPartForm" style="display:none"><div class="section-title">Ersatzteil hinzufügen</div><label>Ersatzteilname (optional, wenn Foto vorhanden)</label><input id="carPartName" placeholder="z. B. Pumpe, Magnetventil …"><label>Automat</label><input id="carPartMachine" list="carPartMachineSuggestions" autocomplete="off" placeholder="Automatenname suchen, z. B. CE5 oder FK230"><datalist id="carPartMachineSuggestions"></datalist><label>Foto (optional)</label><label class="file-label" onclick="document.getElementById('carPartPhotosInput').click()">📷 Foto aufnehmen oder aus Galerie auswählen</label><input id="carPartPhotosInput" type="file" accept="image/*" multiple style="display:none" onchange="handleCarPartPhotoInput(this)"><div id="carPartPhotoPreview" class="photo-preview"></div><button class="btn primary" type="button" style="margin-top:12px" onclick="saveManualCarPart()">💾 Speichern</button><button class="btn secondary" type="button" style="margin-top:8px" onclick="closeCarPartForm()">Abbrechen</button></div>
   <div id="carPartsList"></div>
 </section>
 
@@ -883,8 +883,12 @@ function syncCarPartsFromService(machine,service){
 function openCarPartForm(){
  carPartPhotoState=[];document.getElementById('carPartName').value='';document.getElementById('carPartPhotosInput').value='';
  renderPhotoPreview(document.getElementById('carPartPhotoPreview'),carPartPhotoState,'removeCarPartPhoto');
- const select=document.getElementById('carPartMachine');
- select.innerHTML='<option value="">Bitte Automat auswählen</option>'+machines.filter(m=>m.name).sort((a,b)=>a.name.localeCompare(b.name,'de-DE',{numeric:true,sensitivity:'base'})).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>').join('');
+ const machineInput=document.getElementById('carPartMachine');
+ const suggestions=document.getElementById('carPartMachineSuggestions');
+ machineInput.value='';
+ const uniqueNames=[...new Map(machines.filter(m=>(m.name||'').trim()).map(m=>[m.name.trim().toLocaleLowerCase('de-DE'),m.name.trim()])).values()]
+  .sort((a,b)=>a.localeCompare(b,'de-DE',{numeric:true,sensitivity:'base'}));
+ suggestions.innerHTML=uniqueNames.map(name=>'<option value="'+esc(name)+'"></option>').join('');
  document.getElementById('carPartForm').style.display='block';
 }
 function closeCarPartForm(){document.getElementById('carPartForm').style.display='none';}
@@ -895,11 +899,12 @@ async function handleCarPartPhotoInput(input){
 }
 function removeCarPartPhoto(index){carPartPhotoState.splice(index,1);renderPhotoPreview(document.getElementById('carPartPhotoPreview'),carPartPhotoState,'removeCarPartPhoto');}
 function saveManualCarPart(){
- const name=document.getElementById('carPartName').value.trim(),machineId=document.getElementById('carPartMachine').value;
+ const name=document.getElementById('carPartName').value.trim(),machineName=document.getElementById('carPartMachine').value.trim();
  if(!name&&!carPartPhotoState.length){alert('Bitte einen Namen oder mindestens ein Foto hinzufügen.');return;}
- if(!machineId){alert('Bitte einen Automaten auswählen.');return;}
- const machine=machines.find(m=>m.id===machineId);if(!machine)return;
- carParts.unshift({id:crypto.randomUUID(),name,machineName:machine.name||'',machineId,qty:1,photos:carPartPhotoState.slice(),done:false,source:'manuell',createdAt:new Date().toISOString()});
+ if(!machineName){alert('Bitte einen Automaten auswählen.');return;}
+ const machine=machines.find(m=>(m.name||'').trim().toLocaleLowerCase('de-DE')===machineName.toLocaleLowerCase('de-DE'));
+ if(!machine){alert('Bitte einen Automaten aus der Vorschlagsliste auswählen.');return;}
+ carParts.unshift({id:crypto.randomUUID(),name,machineName:machine.name||'',machineId:machine.id,qty:1,photos:carPartPhotoState.slice(),done:false,source:'manuell',createdAt:new Date().toISOString()});
  persistCarParts();closeCarPartForm();renderCarParts();
 }
 function toggleCarPartDone(id,checked){
