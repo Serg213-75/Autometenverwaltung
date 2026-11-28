@@ -1,4 +1,4 @@
-const CACHE='automaten-v28';
+const CACHE='automaten-v29';
 const ASSETS=['./','./index.html','./manifest.json','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE);
