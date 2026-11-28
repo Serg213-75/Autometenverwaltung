@@ -914,7 +914,23 @@ function renderCarParts(){
 }
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-restoreAutoBackupIfNeeded().then(restored=>{updateHome();updateSuggestions();if(restored)console.info('Automatische Datensicherung wurde wiederhergestellt.');});
+
+function migrateExistingServiceParts(){
+ let changed=false;
+ machines.forEach(machine=>(machine.services||[]).forEach(service=>{
+  if(!(service.parts||[]).length)return;
+  if(!service.id){service.id=crypto.randomUUID();changed=true;}
+  if(carParts.some(p=>p.sourceServiceId===service.id))return;
+  (service.parts||[]).filter(part=>(part.name||'').trim()).forEach((part,index)=>{
+   const key=String(index)+'|'+String(part.name||'').trim().toLocaleLowerCase('de-DE');
+   carParts.push({id:crypto.randomUUID(),name:part.name.trim(),machineName:machine.name||'',machineId:machine.id,qty:Number(part.qty)||1,photos:[],done:false,source:'lieferschein',sourceServiceId:service.id,sourcePartKey:key,createdAt:new Date().toISOString()});
+   changed=true;
+  });
+ }));
+ if(changed){localStorage.setItem(KEY,JSON.stringify(machines));persistCarParts();}
+}
+
+restoreAutoBackupIfNeeded().then(restored=>{migrateExistingServiceParts();updateHome();updateSuggestions();if(restored)console.info('Automatische Datensicherung wurde wiederhergestellt.');});
 
 // Explizite Ereignisbindung für den Kartenbutton (robuster auf iOS/Safari)
 document.addEventListener('DOMContentLoaded',()=>{
