@@ -31,7 +31,7 @@ label{font-size:13px;color:var(--muted);display:block;margin:13px 0 6px}input,se
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}
 .nav-inner{width:min(700px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.nav-btn{background:none;color:var(--muted);padding:7px 3px;font-size:11px}.nav-btn span{display:block;font-size:21px;margin-bottom:2px}.nav-btn.active{color:var(--blue);font-weight:700}
 .service-row{background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}.timer-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 12px}.timer-btn{padding:14px;border-radius:13px;font-weight:800;background:#eef3f8;color:var(--text)}.timer-btn.start{background:#eaf8f0;color:var(--green)}.timer-btn.finish{background:#fff0f0;color:var(--danger)}.timer-btn:disabled{opacity:.45;cursor:not-allowed}.notice{padding:11px 13px;border-radius:12px;background:#fff8df;border:1px solid #f0df9c;font-size:13px;margin-bottom:12px}
-.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}.parts-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}.part-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.part-row .remove-part{margin-top:8px}.portion-wrap{display:none}.coffee-only{display:none}.station-input{min-height:76px!important;resize:vertical}.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.filter-selects{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.photo-preview .photo-item{position:relative;width:82px;height:82px}.photo-preview img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.photo-remove{position:absolute;right:-6px;top:-6px;width:27px;height:27px;border-radius:50%;background:#c62828;color:white;font-weight:900;border:2px solid white}.map-picker{height:55vh;min-height:300px;border-radius:12px;overflow:hidden;margin:12px 0}
+.file-label{display:block;text-align:center;padding:13px;border-radius:13px;background:#eef3f8;font-weight:700;cursor:pointer}.parts-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}.part-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}.part-row .remove-part{margin-top:8px}.portion-wrap{display:none}.coffee-only{display:none}.station-input{min-height:76px!important;resize:vertical}.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:9px}.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.filter-selects{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.photo-preview .photo-item{position:relative;width:82px;height:82px}.photo-preview img{width:82px;height:82px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.photo-remove{position:absolute;right:-6px;top:-6px;width:27px;height:27px;border-radius:50%;background:#c62828;color:white;font-weight:900;border:2px solid white}.car-part-head,.car-part-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(75px,1fr) 74px;gap:8px;align-items:center}.car-part-head{font-size:12px;color:var(--muted);font-weight:700;padding:0 4px 8px}.car-part-row{background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px;margin-bottom:8px}.car-part-name{font-weight:650;overflow-wrap:anywhere}.car-part-machine{font-size:13px;overflow-wrap:anywhere}.car-part-done{text-align:center}.car-part-done input{width:23px;height:23px;accent-color:var(--green)}.car-part-photos{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}.car-part-photos img{width:48px;height:48px;object-fit:cover;border-radius:7px}.map-picker{height:55vh;min-height:300px;border-radius:12px;overflow:hidden;margin:12px 0}
 @media(min-width:650px){.stats{grid-template-columns:repeat(5,1fr)}.actions{grid-template-columns:repeat(3,1fr)}}
 .modal{position:fixed;inset:0;background:#0008;z-index:30;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modal-card{width:min(700px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px}.signature-pad{width:100%;height:180px;border:1px dashed #9aa6b2;border-radius:12px;background:#fff;touch-action:none}.small-note{font-size:12px;color:var(--muted)}.service-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.service-actions button{flex:1;min-width:140px}.print-only{display:none}@media print{body{background:#fff}.app>header,.app>main,.app>nav,.modal{display:none!important}.print-only{display:block!important}}
 
@@ -53,6 +53,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <button class="action" onclick="showView('form')"><span class="icon">➕</span><strong>Automat einfügen</strong><span class="sub">Neuen Automaten erfassen</span></button>
     <button class="action" onclick="showView('search')"><span class="icon">🔍</span><strong>Automat suchen</strong><span class="sub">Nummer, Firma oder Standort</span></button>
     <button class="action" onclick="showView('list')"><span class="icon">📋</span><strong>Alle Automaten</strong><span class="sub">Übersicht und Filter</span></button>
+    <button class="action" onclick="showView('carParts')"><span class="icon">🧰</span><strong>Ersatzteile fürs Auto</strong><span class="sub" id="carPartsHomeCount">0 Teile im Auto</span></button>
   </div>
   <div class="stats" id="stats"></div>
 </section>
@@ -133,6 +134,13 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   <div id="detailContent"></div>
 </section>
 
+<section id="carParts" class="view">
+  <button class="back" onclick="showView('home')">‹ Startseite</button>
+  <div class="card"><div class="section-title">Ersatzteile fürs Auto</div><p class="sub">Ersatzteile aus unseren Lieferscheinen und manuell eingetragene Teile. Abhaken bedeutet: Das Teil liegt wieder im Auto.</p><button class="btn primary" type="button" onclick="openCarPartForm()">➕ Ersatzteil manuell eintragen</button></div>
+  <div class="card" id="carPartForm" style="display:none"><div class="section-title">Ersatzteil hinzufügen</div><label>Ersatzteilname (optional, wenn Foto vorhanden)</label><input id="carPartName" placeholder="z. B. Pumpe, Magnetventil …"><label>Automat</label><select id="carPartMachine"></select><label>Foto (optional)</label><label class="file-label" onclick="document.getElementById('carPartPhotosInput').click()">📷 Foto aufnehmen oder aus Galerie auswählen</label><input id="carPartPhotosInput" type="file" accept="image/*" multiple style="display:none" onchange="handleCarPartPhotoInput(this)"><div id="carPartPhotoPreview" class="photo-preview"></div><button class="btn primary" type="button" style="margin-top:12px" onclick="saveManualCarPart()">💾 Speichern</button><button class="btn secondary" type="button" style="margin-top:8px" onclick="closeCarPartForm()">Abbrechen</button></div>
+  <div id="carPartsList"></div>
+</section>
+
 <section id="data" class="view">
   <button class="back" onclick="showView('home')">‹ Startseite</button>
   <div class="card">
@@ -182,7 +190,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const KEY='automatenverwaltung_v1';
+const CAR_PARTS_KEY='automatenverwaltung_car_parts_v1';
 let machines=JSON.parse(localStorage.getItem(KEY)||'[]');
+let carParts=JSON.parse(localStorage.getItem(CAR_PARTS_KEY)||'[]');
+let carPartPhotoState=[];
 let currentFilter='Alle';
 let machinePhotoState=[];
 function fileToCompressedData(file,maxSide=1000,quality=0.58){
@@ -288,7 +299,7 @@ async function writeAutoBackup(){
   db=await openAutoBackupDb();
   await new Promise((resolve,reject)=>{
    const tx=db.transaction('snapshots','readwrite');
-   tx.objectStore('snapshots').put({machines:JSON.parse(JSON.stringify(machines)),savedAt:new Date().toISOString()},'latest');
+   tx.objectStore('snapshots').put({machines:JSON.parse(JSON.stringify(machines)),carParts:JSON.parse(JSON.stringify(carParts)),savedAt:new Date().toISOString()},'latest');
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Sicherung abgebrochen'));
   });
  }catch(error){console.warn('Automatische Datensicherung fehlgeschlagen:',error);}
@@ -306,7 +317,9 @@ async function restoreAutoBackupIfNeeded(){
   });
   if(snapshot&&Array.isArray(snapshot.machines)&&snapshot.machines.length){
    machines=snapshot.machines;
+   carParts=Array.isArray(snapshot.carParts)?snapshot.carParts:carParts;
    localStorage.setItem(KEY,JSON.stringify(machines));
+   localStorage.setItem(CAR_PARTS_KEY,JSON.stringify(carParts));
    return true;
   }
  }catch(error){console.warn('Automatische Wiederherstellung nicht möglich:',error);}
@@ -315,6 +328,7 @@ async function restoreAutoBackupIfNeeded(){
 }
 function persist(){
  localStorage.setItem(KEY,JSON.stringify(machines));
+ localStorage.setItem(CAR_PARTS_KEY,JSON.stringify(carParts));
  writeAutoBackup();
  updateHome();updateSuggestions();
 }
@@ -336,12 +350,14 @@ function showView(id){
   if(id==='search'){document.getElementById('searchInput').focus();renderResults();}
   if(id==='list') renderList();
   if(id==='data') updateDataInfo();
+  if(id==='carParts') renderCarParts();
   window.scrollTo(0,0);
 }
 function updateHome(){
   document.getElementById('heroText').textContent=machines.length?`${machines.length} Automaten erfasst.`:'Noch keine Automaten erfasst.';
   const counts=types.slice(1).map(t=>`<div class="stat"><b>${machines.filter(m=>m.type===t).length}</b><span>${t}</span></div>`).join('');
   document.getElementById('stats').innerHTML=counts+`<div class="stat"><b>${machines.length}</b><span>Alle Automaten</span></div>`;
+  const pending=carParts.filter(p=>!p.done).length;const homeCount=document.getElementById('carPartsHomeCount');if(homeCount)homeCount.textContent=pending+' Teile im Auto';
 }
 function newMachine(){resetForm();updateSuggestions();showView('form');}
 function resetForm(){
@@ -637,11 +653,14 @@ function saveService(e){
    s.printedName=s.printedName||old.printedName||'';
    s.customerEmail=s.customerEmail||old.customerEmail||'';
    s.signature=s.signature||old.signature||'';
+   s.id=old.id||crypto.randomUUID();
    m.services[serviceEditIndex]=s;
  }else{
+   s.id=crypto.randomUUID();
    s.technician='';s.printedName='';s.customerEmail='';s.signature='';
    m.services.unshift(s);
  }
+ syncCarPartsFromService(m,s);
  m.updatedAt=new Date().toISOString();
  clearServiceDraft();
  serviceTimerStarted=false; serviceTimerFinished=false; serviceEditIndex=null;
@@ -660,6 +679,7 @@ function deleteService(){
   const datum=s.date||'ohne Datum';
   if(!window.confirm(`Serviceeinsatz vom ${datum} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return false;
   m.services.splice(index,1);
+  carParts=carParts.filter(p=>p.sourceServiceId!==s.id);
   m.updatedAt=new Date().toISOString();
   if(machineId) localStorage.removeItem(SERVICE_DRAFT_PREFIX+machineId);
   serviceTimerStarted=false;
@@ -838,16 +858,61 @@ async function prepareEmail(m,s){
   }
 }
 function exportData(){
- const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),machines},null,2)],{type:'application/json'});
+ const blob=new Blob([JSON.stringify({version:2,exportedAt:new Date().toISOString(),machines,carParts},null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='automaten-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
 }
 function importData(e){
  const file=e.target.files[0];if(!file)return;const r=new FileReader();
  r.onload=()=>{try{const d=JSON.parse(r.result);const incoming=Array.isArray(d)?d:d.machines;if(!Array.isArray(incoming))throw Error();
- const map=new Map(machines.map(m=>[m.id,m]));incoming.forEach(m=>{if(m.id)map.set(m.id,m)});machines=[...map.values()];persist();alert(`${incoming.length} Datensätze importiert/aktualisiert.`);showView('home')}catch{alert('Die Datei konnte nicht gelesen werden.')}};r.readAsText(file);e.target.value='';
+ const map=new Map(machines.map(m=>[m.id,m]));incoming.forEach(m=>{if(m.id)map.set(m.id,m)});machines=[...map.values()];if(Array.isArray(d.carParts)){const pm=new Map(carParts.map(p=>[p.id,p]));d.carParts.forEach(p=>{if(p.id)pm.set(p.id,p)});carParts=[...pm.values()];}persist();alert(`${incoming.length} Datensätze importiert/aktualisiert.`);showView('home')}catch{alert('Die Datei konnte nicht gelesen werden.')}};r.readAsText(file);e.target.value='';
 }
 function clearAll(){if(confirm('Wirklich ALLE Automaten löschen? Diese Aktion kann nur mit einem Backup rückgängig gemacht werden.')){machines=[];persist();showView('home')}}
-function updateDataInfo(){document.getElementById('dataInfo').textContent=`${machines.length} Automaten lokal auf diesem Gerät gespeichert. Automatische Zusatzsicherung auf diesem Gerät ist aktiv.`}
+function updateDataInfo(){document.getElementById('dataInfo').textContent=`${machines.length} Automaten und ${carParts.length} Ersatzteile lokal auf diesem Gerät gespeichert. Automatische Zusatzsicherung auf diesem Gerät ist aktiv.`}
+
+function persistCarParts(){localStorage.setItem(CAR_PARTS_KEY,JSON.stringify(carParts));writeAutoBackup();updateHome();}
+function syncCarPartsFromService(machine,service){
+ if(!service.id)service.id=crypto.randomUUID();
+ const oldParts=carParts.filter(p=>p.sourceServiceId===service.id),byKey=new Map(oldParts.map(p=>[p.sourcePartKey,p]));
+ carParts=carParts.filter(p=>p.sourceServiceId!==service.id);
+ (service.parts||[]).filter(p=>(p.name||'').trim()).forEach((part,index)=>{
+  const key=String(index)+'|'+String(part.name||'').trim().toLocaleLowerCase('de-DE'),old=byKey.get(key);
+  carParts.push({id:old?.id||crypto.randomUUID(),name:part.name.trim(),machineName:machine.name||'',machineId:machine.id,qty:Number(part.qty)||1,photos:old?.photos||[],done:!!old?.done,source:'lieferschein',sourceServiceId:service.id,sourcePartKey:key,createdAt:old?.createdAt||new Date().toISOString()});
+ });
+ persistCarParts();
+}
+function openCarPartForm(){
+ carPartPhotoState=[];document.getElementById('carPartName').value='';document.getElementById('carPartPhotosInput').value='';
+ renderPhotoPreview(document.getElementById('carPartPhotoPreview'),carPartPhotoState,'removeCarPartPhoto');
+ const select=document.getElementById('carPartMachine');
+ select.innerHTML='<option value="">Bitte Automat auswählen</option>'+machines.filter(m=>m.name).sort((a,b)=>a.name.localeCompare(b.name,'de-DE',{numeric:true,sensitivity:'base'})).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>').join('');
+ document.getElementById('carPartForm').style.display='block';
+}
+function closeCarPartForm(){document.getElementById('carPartForm').style.display='none';}
+async function handleCarPartPhotoInput(input){
+ try{for(const file of [...(input.files||[])]){if(carPartPhotoState.length>=5){alert('Maximal 5 Fotos pro Ersatzteil.');break;}if(file.type.startsWith('image/'))carPartPhotoState.push(await fileToCompressedData(file));}}
+ catch(e){alert('Ein Foto konnte nicht geladen werden.');}
+ renderPhotoPreview(document.getElementById('carPartPhotoPreview'),carPartPhotoState,'removeCarPartPhoto');input.value='';
+}
+function removeCarPartPhoto(index){carPartPhotoState.splice(index,1);renderPhotoPreview(document.getElementById('carPartPhotoPreview'),carPartPhotoState,'removeCarPartPhoto');}
+function saveManualCarPart(){
+ const name=document.getElementById('carPartName').value.trim(),machineId=document.getElementById('carPartMachine').value;
+ if(!name&&!carPartPhotoState.length){alert('Bitte einen Namen oder mindestens ein Foto hinzufügen.');return;}
+ if(!machineId){alert('Bitte einen Automaten auswählen.');return;}
+ const machine=machines.find(m=>m.id===machineId);if(!machine)return;
+ carParts.unshift({id:crypto.randomUUID(),name,machineName:machine.name||'',machineId,qty:1,photos:carPartPhotoState.slice(),done:false,source:'manuell',createdAt:new Date().toISOString()});
+ persistCarParts();closeCarPartForm();renderCarParts();
+}
+function toggleCarPartDone(id,checked){
+ const part=carParts.find(p=>p.id===id);if(!part)return;
+ part.done=!!checked;part.doneAt=part.done?new Date().toISOString():null;persistCarParts();renderCarParts();
+}
+function renderCarParts(){
+ const list=document.getElementById('carPartsList');if(!list)return;
+ const pending=carParts.filter(p=>!p.done);
+ if(!pending.length){list.innerHTML='<div class="card empty">Aktuell keine Ersatzteile auf der Liste. 👍</div>';return;}
+ list.innerHTML='<div class="card"><div class="car-part-head"><div>Ersatzteil Name / Foto</div><div>Automat</div><div class="car-part-done">Erledigt</div></div>'+pending.map(p=>'<div class="car-part-row"><div><div class="car-part-name">'+esc(p.name||'Ohne Bezeichnung')+(p.qty>1?' × '+p.qty:'')+'</div>'+(p.photos?.length?'<div class="car-part-photos">'+p.photos.map(src=>'<img src="'+src+'" alt="Ersatzteilfoto" onclick="openImageViewer(this.src)">').join('')+'</div>':'')+'<div class="small-note">'+(p.source==='lieferschein'?'Aus Lieferschein':'Manuell')+'</div></div><div class="car-part-machine">'+esc(p.machineName||'—')+'</div><div class="car-part-done"><input type="checkbox" aria-label="Ersatzteil erledigt" onchange="toggleCarPartDone(\''+p.id+'\',this.checked)"></div></div>').join('')+'</div>';
+}
+
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 restoreAutoBackupIfNeeded().then(restored=>{updateHome();updateSuggestions();if(restored)console.info('Automatische Datensicherung wurde wiederhergestellt.');});
 
